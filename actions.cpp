@@ -9,6 +9,12 @@
 #include "constants.cpp"
 #endif
 
+//Need to include characters.cpp for the Polymorph class
+#ifndef __CHARACTERS_INCLUDED__
+#define __CHARACTERS_INCLUDED__
+#include "characters.cpp"
+#endif
+
 using namespace std;
 
 // https://rpg.stackexchange.com/questions/70335/how-do-i-calculate-the-chance-to-hit-a-given-ac?newreg=7e3de3c84d9a42ba96b932f394793d7f
@@ -17,13 +23,15 @@ using namespace std;
 class Action {
     protected:
         char name[STRSIZE]; //make sure its \0 terminated char*
+        char type[STRSIZE] = "DEFAULT\0";
+        short att; //what stat (STR, DEX, ect) is associated with this action?
         short range;
 
     protected:
-        void InitBase(char* Name, char* Type, short Range)\
-        {
+        void InitBase(char* Name, char* Type, short Range, short Att) {
             memcpy(name, Name, STRSIZE);
-            memcpy(type, Type, STRSIZE);       
+            memcpy(type, Type, STRSIZE);
+            att = Att; 
             range = Range;
         }
 
@@ -32,17 +40,16 @@ class Action {
         void PrintBase() {
             cout << "\n###### " << type << " Attributes ######";
             cout << "\n\tName: " << name;
+            cout << "\n\tAssociated attribute: " << att;
             cout << "\n\tRange: " << range;
             cout << "\n";
         }
 
     public:
-        char type[STRSIZE] = "DEFAULT\0";
-
         /*Returns the range of the Action, in feet*/
-        short GetRange() {
-            return range;
-        }
+        short GetRange() { return range; }
+        char* GetType() { return type; }
+        short GetAtt() { return att; }
 
         virtual void PrintAtt() {
             cout << "DEFAULT PRINTATT";
@@ -56,20 +63,26 @@ class MeleeAtk : public Action {
     protected:
         short damage;
         char dmgType[STRSIZE];
-        short toHit;       //how much do we + (or -) from dice roll?
+        bool useProf;
 
     public:
-
-        char type[STRSIZE] = "MeleeAtk\0";
-
-        void Init(char* Name, short ToHit, short Range,\
+        void Init(char* Name, short Att, bool UseProf, short Range,\
                   short Dmg, char* DmgT)\
         {
-            InitBase(Name,type,Range);
+            InitBase(Name, "MeleeAtk\0", Range, Att);
 
-            toHit = ToHit;
             damage = Dmg;
+            useProf = UseProf;
             memcpy(dmgType, DmgT, STRSIZE);
+        }
+
+        //calculates the to-hit modifier of an attack
+        short ToHit(short attBonus, short profBonus) {
+            if (profBonus) {
+                return attBonus+profBonus;
+            } else {
+                return attBonus;
+            } 
         }
 
         /*Displays the attributes of an Action object via printing to
@@ -78,7 +91,7 @@ class MeleeAtk : public Action {
             PrintBase();
             cout << "\n\tDamage: " << damage;
             cout << "\n\tDamage type: " << dmgType;
-            cout << "\n\tTo hit bonus: " << toHit;
+            cout << "\n\tUses proficiency? " << useProf;
         }
 };
 
@@ -88,20 +101,26 @@ class RangedAtk : public Action {
     protected:
         short damage;
         char dmgType[STRSIZE];
-        short toHit;       //how much do we + (or -) from dice roll?
+        bool useProf;
 
     public:
-
-        char type[STRSIZE] = "RangedAtk\0";
-
-        void Init(char* Name, short ToHit, short Range,\
+        void Init(char* Name, short Att, bool UseProf, short Range,\
                   short Dmg, char* DmgT)\
         {
-            InitBase(Name,type,Range);
+            InitBase(Name,"RangedAtk\0",Range, Att);
 
-            toHit = ToHit;
+            useProf = UseProf;
             damage = Dmg;
             memcpy(dmgType, DmgT, STRSIZE);
+        }
+
+        //calculates the to-hit modifier of an attack
+        short ToHit(short attBonus, short profBonus) {
+            if (profBonus) {
+                return attBonus+profBonus;
+            } else {
+                return attBonus;
+            } 
         }
 
         /*Displays the attributes of an Action object via printing to
@@ -110,7 +129,7 @@ class RangedAtk : public Action {
             PrintBase();
             cout << "\n\tDamage: " << damage;
             cout << "\n\tDamage type: " << dmgType;
-            cout << "\n\tTo hit bonus: " << toHit;
+            cout << "\n\tUses proficiency? " << useProf;
         }
 };
 
@@ -122,25 +141,24 @@ class DamageSave : public Action {
     protected:
         short damage;
         char dmgType[STRSIZE];
-        
-        short saveDC;
         char saveType[STRSIZE];
         bool halfOnSuccess;     //even if someone succeeds, still take 1/2 dmg
 
     public:
-
-        char type[STRSIZE] = "DamageSave\0";
-
-        void Init(char* Name, short Range, short Dmg, char* DmgT,\
-                  short SaveDC,char* SaveType, bool HalfOnSucc)
+        void Init(char* Name, short Att, bool UseProf, short Range, short Dmg, char* DmgT,\
+                  char* SaveType, bool HalfOnSucc)
         {
-            InitBase(Name,type,Range);
+            InitBase(Name,"DamageSave\0",Range,Att);
 
             damage = Dmg;
             memcpy(dmgType, DmgT, STRSIZE);
-            saveDC = SaveDC;
             memcpy(saveType, SaveType, STRSIZE);
             halfOnSuccess = HalfOnSucc;
+        }
+
+        /*Calculates the current save DC of the DamageSave*/
+        short SaveDC(short attBonus, short profBonus) {
+            return attBonus+profBonus;
         }
 
         /*Displays the attributes of an Action object via printing to
@@ -149,7 +167,6 @@ class DamageSave : public Action {
             PrintBase();
             cout << "\n\tDamage: " << damage;
             cout << "\n\tDamage type: " << dmgType;
-            cout << "\n\tSave DC: " << saveDC;
             cout << "\n\tSave Type: " << saveType;
             cout << "\n\tHalf DMG on success? " << halfOnSuccess;
         }
@@ -162,24 +179,22 @@ class ConditionSave : public Action {
     protected:
         char condition[STRSIZE];
         short duration; //in rounds
-        
-        short saveDC;
         char saveType[STRSIZE];
 
     public:
-
-        char type[STRSIZE] = "ConditionSave\0";
-
-        void Init(char* Name, short Range, char* Condition,\
-                  short Duration, short SaveDC, char* SaveType)\
-        {
-            InitBase(Name,type,Range);
+        void Init(char* Name, short Att, short Range, char* Condition,\
+                  short Duration, char* SaveType) {
+            InitBase(Name, "ConditionSave\0", Range, Att);
 
             memcpy(condition,Condition, STRSIZE);
             duration = Duration;
 
-            saveDC = SaveDC;
             memcpy(saveType, SaveType, STRSIZE);
+        }
+
+        /*Calculates the current save DC of the DamageSave*/
+        short SaveDC(short attBonus, short profBonus) {
+            return attBonus+profBonus;
         }
 
         /*Displays the attributes of an Action object via printing to
@@ -188,7 +203,6 @@ class ConditionSave : public Action {
             PrintBase();
             cout << "\n\tCondition: " << condition;
             cout << "\n\tDuration: " << duration;
-            cout << "\n\tSave DC: " << saveDC;
             cout << "\n\tSave Type: " << saveType;
         }
 };
@@ -201,11 +215,8 @@ class HealBuff : public Action {
         short healing;
 
     public:
-
-        char type[STRSIZE] = "HealBuff\0";
-
-        void Init(char* Name, short Range, short Healing) {
-            InitBase(Name,type,Range);
+        void Init(char* Name, short Att, short Range, short Healing) {
+            InitBase(Name,"HealBuff\0",Range, Att);
 
             healing = Healing;
         }
@@ -228,10 +239,8 @@ class SelfHealBuff : public Action {
 
     public:
 
-        char type[STRSIZE] = "SelfHealBuff\0";
-
-        void Init(char* Name, short Range, short Healing) {
-            InitBase(Name,type,Range);
+        void Init(char* Name, short Att, short Range, short Healing) {
+            InitBase(Name,"SelfHealBuff\0",Range, Att);
 
             healing = Healing;
         }
@@ -253,10 +262,8 @@ class ConditionBuff : public Action {
 
     public:
 
-        char type[STRSIZE] = "ConditionBuff\0";
-
-        void Init(char* Name, short Range, char* Effect, short Duration) {
-            InitBase(Name,type,Range);
+        void Init(char* Name, short Att, short Range, char* Effect, short Duration) {
+            InitBase(Name, "ConditionBuff\0", Range, Att);
 
             memcpy(effect, Effect,STRSIZE);
             duration = Duration;
@@ -281,11 +288,8 @@ class SelfCondBuff : public Action {
         short duration;
 
     public:
-
-        char type[STRSIZE] = "SelfCondBuff\0";
-
-        void Init(char* Name, short Range, char* Effect, short Duration) {
-            InitBase(Name,type,Range);
+        void Init(char* Name, short Att, short Range, char* Effect, short Duration) {
+            InitBase(Name,"SelfCondBuff\0",Range, Att);
 
             memcpy(effect, Effect,STRSIZE);
             duration = Duration;
@@ -300,10 +304,27 @@ class SelfCondBuff : public Action {
         }
 };
 
+
+/*Action that represents Polymorph. Due to the very large number of beasts
+in D&D, each instance of this Polymorph class represents one possible beast
+that someone could be transformed into.*/
+class Polymorph : public Action {
+    protected:
+        short nActions;
+        Action** actions;
+    
+    public:
+        void Init(Action** Actions, short NActions, char* BeastName, short att[NATT]) {
+            InitBase(BeastName,"Polymorph\0",60,WIS);
+            nActions = NActions;
+            actions = new Action*[nActions];
+        }
+};
+
 /*The action bundle is a list of simple actions.
 The action bundle is useful for creating complex actions that do
 more than one thing to a character or characters*/
-class ActionBundle : public Action {
+class ActionBundle {
     protected:
         short nActions;
         Action** actions;
@@ -315,7 +336,7 @@ class ActionBundle : public Action {
 
         void PrintAtt() {
             for(int i=0; i<nActions; i++) {
-                cout << "action type [" << i << "]: " << actions[i]->type;
+                cout << "action type [" << i << "]: " << actions[i]->GetType();
             }
         }
 };
