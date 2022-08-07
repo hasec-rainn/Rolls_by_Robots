@@ -48,11 +48,16 @@
 #define STUNNED 20
 #define UNCONSCIOUS 21
 
-//
+//damage modifier constants
+#define IMMUNE 0 //immune to damage source
+#define RESIST -2 //resistant to damage source
+#define NORM 1
+#define VULN 2
 
 //misc constants
-#define STRSIZE 16
+#define STRSIZE 16 //how many char in string
 #define INF -1
+#define MAXMODS 20 //max number of elements that can modifer base value
 
 //pseudo-dictionaries used for converting the constants above
 //into strings for printing
