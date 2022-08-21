@@ -16,13 +16,13 @@ using namespace std;
 
 class Action {
     protected:
-        char name[STRSIZE]; //make sure its \0 terminated char*
+        char* name; //make sure its \0 terminated char*
         short att; //what stat (STR, DEX, ect) is associated with this action?
         short range;
 
     protected:
         void InitBase(char* Name, short Range, short Att) {
-            memcpy(name, Name, STRSIZE);
+            name = Name;
             att = Att; 
             range = Range;
         }
@@ -84,6 +84,19 @@ class MeleeAtk : public Action {
             cout << "\n\tDamage type: " << dmgTypeDict[dmgType];
             cout << "\n\tUses proficiency? " << useProf;
         }
+
+        /*Performs copy by value of two MeleeAtks*/
+        void operator=(MeleeAtk atk) {
+            //only name is copied by reference since it never changes
+            name = atk.name;
+            att = atk.att;
+            range = atk.range;
+
+            damage = atk.damage;
+            useProf = atk.useProf;
+            dmgType = atk.dmgType;
+
+        }
 };
 
 
@@ -121,6 +134,19 @@ class RangedAtk : public Action {
             cout << "\n\tDamage: " << damage;
             cout << "\n\tDamage type: " << dmgTypeDict[dmgType];
             cout << "\n\tUses proficiency? " << useProf;
+        }
+
+        /*Performs copy by value of two RangedAtks*/
+        void operator=(RangedAtk atk) {
+            //only name is copied by reference since it never changes
+            name = atk.name;
+            att = atk.att;
+            range = atk.range;
+
+            damage = atk.damage;
+            useProf = atk.useProf;
+            dmgType = atk.dmgType;
+
         }
 };
 

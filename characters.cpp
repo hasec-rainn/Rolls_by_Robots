@@ -4,8 +4,15 @@
 #include<cmath>
 
 
-#include "actions.cpp"
+#ifndef __MODOBJ_INCLUDED__
+#define __MODOBJ_INCLUDED__
 #include "modifiable_obj.cpp"
+#endif
+
+#ifndef __ACTIONS_INCLUDED__
+#define __ACTIONS_INCLUDED__
+#include "actions.cpp"
+#endif
 #ifndef __CONSTANTS_INCLUDED__
 #define __CONSTANTS_INCLUDED__
 #include "constants.cpp"
@@ -24,6 +31,7 @@
 ********************************************************************/
 class Character {
     private:
+        char* name;
         ModObj maxHP; short hp; //note: this system cannot represent temp HP
         short ac;   //assume armor is static: system cannot represent taking cover
         ModObj speed;   //speed boosts & reductions are representable
@@ -58,30 +66,30 @@ class Character {
 
     public:
 
-        Character(ModObj MaxHP, short HP, short AC, ModObj Speed,\
+        Character(char* Name, short MaxHP, short HP, short AC, short Speed,\
                   DmgMod DmgMods, Attribute* Attributes, bool* Effects,
                   Action** Actions, short NAct)
         {
-            maxHP = MaxHP; hp = HP;
+            name = Name; //copy by reference since name will never change
+            maxHP.Init(MaxHP); hp = HP;
             ac = AC;
-            speed = Speed;
+            speed.Init(Speed);
             
             //copy in str, dex, con, ... into respective attribute slots
             for(short att=0; att<NATT; att++) {
                 attributes[att] = Attributes[att];}
 
+            //copy in any active effects on the character
             for(int i=0; i<NEFFECT; i++) {
                 effects[i] = Effects[i];}
 
             nAct = NAct; actions = Actions;
 
-            //for(short act=0; act<NAct; act++) {
-            //    actions[act] = Actions[act]; }
         }
 
         /*Print everything you'd ever want to know about the character*/
-        void PrintAtt() {
-            cout << "\n###### Character Attributes ######";
+        void PrintAll() {
+            cout << "\n###### " << name << " Info ######";
             cout << "\n\tMax HP: " << maxHP.GetValue();
             cout << "\n\tCurrent HP: " << hp;
             cout << "\n\tAC: " << ac;
