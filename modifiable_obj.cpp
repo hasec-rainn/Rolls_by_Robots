@@ -85,6 +85,17 @@ class ModObj {
                 return baseVal;
             }
         }
+
+        /*Performs copy by value of two ModObjs*/
+        void operator=(ModObj modObj) {
+            baseVal = modObj.baseVal;
+            nMods = modObj.nMods;
+            short i;
+            for(i=0; i<MAXMODS; i++) {
+                modifiers[i] = modObj.modifiers[i];
+                modDur[i] = modObj.modDur[i];
+            }
+        }
 };
 
 /*Basically just ModObj, but with ability to specifically request
@@ -109,6 +120,11 @@ class DmgMod {
         short nMods;    //number of modifers acting on the base damage modifiers
         short modifiers[NDMGTYPE]; //all the values that are modifying the base mods
         short modDur[NDMGTYPE];  //time left for each modifer in "modifiers"
+
+        /*Note that, with this set up, only one thing can be modifying the
+        base modifier of a particular damage type at once. In other words,
+        this model cannot represent multiple modifers acting on one damage
+        type at once.*/
 
         /*Removes the modifier of type "dmgType" from modifiers*/
         void RemoveMod(short dmgType) {
@@ -199,13 +215,14 @@ class DmgMod {
             }
         }
 
-        void operator=(DmgMod* dmgModifiers) {
+        /*Performs copy by value of two DmgMods*/
+        void operator=(DmgMod dmgModifiers) {
+            nMods = dmgModifiers.nMods;
             short i;
             for(i=0;i<NDMGTYPE; i++) {
-                nMods = dmgModifiers->nMods;
-                baseMods[i] = dmgModifiers->baseMods[i];
-                modifiers[i] = dmgModifiers->modifiers[i];
-                modDur[i] = dmgModifiers->modDur[i];
+                baseMods[i] = dmgModifiers.baseMods[i];
+                modifiers[i] = dmgModifiers.modifiers[i];
+                modDur[i] = dmgModifiers.modDur[i];
             }
         }
 };
