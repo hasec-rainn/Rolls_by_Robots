@@ -17,7 +17,7 @@ using namespace std;
 class Action {
     protected:
         char* name; //make sure its \0 terminated char*
-        short att; //what stat (STR, DEX, ect) is associated with this action?
+        short att; //what stat (STR, DEX, ect) is associated with performing this action?
         short range;
 
     protected:
@@ -48,8 +48,6 @@ class Action {
         }
 };
 
-
-
 class MeleeAtk : public Action {
     protected:
         short damage;
@@ -67,14 +65,8 @@ class MeleeAtk : public Action {
             dmgType = DmgT;
         }
 
-        //calculates the to-hit modifier of an attack
-        short ToHit(short attBonus, short profBonus) {
-            if (profBonus) {
-                return attBonus+profBonus;
-            } else {
-                return attBonus;
-            } 
-        }
+        /*Returns true is a character uses proficiency bonus for this atk*/
+        bool IsProf() { return useProf; }
 
         /*Displays the attributes of an Action object via printing to
         stdout*/
@@ -118,14 +110,8 @@ class RangedAtk : public Action {
             dmgType = DmgT;
         }
 
-        //calculates the to-hit modifier of an attack
-        short ToHit(short attBonus, short profBonus) {
-            if (profBonus) {
-                return attBonus+profBonus;
-            } else {
-                return attBonus;
-            } 
-        }
+        /*Returns true is a character uses proficiency bonus for this atk*/
+        bool IsProf() { return useProf; }
 
         /*Displays the attributes of an Action object via printing to
         stdout*/
@@ -146,7 +132,6 @@ class RangedAtk : public Action {
             damage = atk.damage;
             useProf = atk.useProf;
             dmgType = atk.dmgType;
-
         }
 };
 
@@ -158,7 +143,7 @@ class DamageSave : public Action {
     protected:
         short damage;
         short dmgType;
-        short saveType;
+        short saveType; //what type of save (STR,DEX,etc) will recipient make?
         bool halfOnSuccess;     //even if someone succeeds, still take 1/2 dmg
 
     public:
@@ -196,7 +181,7 @@ class ConditionSave : public Action {
     protected:
         short condition;
         short duration; //in rounds
-        short saveType;
+        short saveType; //what type of save (STR,DEX,etc) will recipient make?
 
     public:
         void Init(char* Name, short Att, short Range, short Condition,\
@@ -256,8 +241,8 @@ class SelfHealBuff : public Action {
 
     public:
 
-        void Init(char* Name, short Att, short Range, short Healing) {
-            InitBase(Name, Range, Att);
+        void Init(char* Name, short Att, short Healing) {
+            InitBase(Name, 0, Att);
 
             healing = Healing;
         }
@@ -305,8 +290,8 @@ class SelfCondBuff : public Action {
         short duration;
 
     public:
-        void Init(char* Name, short Att, short Range, short Effect, short Duration) {
-            InitBase(Name,Range, Att);
+        void Init(char* Name, short Att, short Effect, short Duration) {
+            InitBase(Name,0, Att);
 
             effect = Effect;
             duration = Duration;

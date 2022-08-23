@@ -49,6 +49,7 @@
 #define UNCONSCIOUS 21
 
 //damage modifier constants
+#define NDMGMOD 4
 #define IMMUNE 0 //immune to damage source
 #define RESIST -2 //resistant to damage source
 #define NORM 1

@@ -98,6 +98,31 @@ class ModObj {
         }
 };
 
+class HP : public ModObj {
+    public:
+        /*Takes away an ammount of HP specifed by "damage"*/
+        void SubHP(short damage) {
+            
+            if(nMods<=0) { //nothing fancy: just subtract directly from baseVal
+                baseVal = baseVal - damage;
+            } else {    //this player has temp HP; eat through temp HP before base HP
+                for(short i=MAXMODS; i>=0; i--) {
+                    modifiers[i] = modifiers[i] - damage; //eating through tempHP
+                    damage = damage - (damage + modifiers[i]) ; //damage being soaked up by tempHP
+                    if( modifiers[i] > 0 ) { //temp health ate up all the damage
+                        return; //we don't need to do anything else
+                    } else { //damage ate through this stack of temp hp
+                        RemoveMod(i);
+                    }
+                }
+
+                /*Looks like tempHP wasn't enough to absorb all
+                the damage; baseVal takes a hit to HP too*/
+                baseVal = baseVal - damage;
+            }
+        }
+};
+
 /*Basically just ModObj, but with ability to specifically request
 attribute scores and statistic mods (eg str score and str mod)*/
 class Attribute : public ModObj {
@@ -107,8 +132,8 @@ class Attribute : public ModObj {
 
         /*Returns the attribute modifier*/
         short GetMod() {
-            /*Negative values may be off by 1*/
-            return (GetValue() - 10) / 2;
+            float score = GetScore();
+            return floor(( score - 10) / 2);
         }
 };
 

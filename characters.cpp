@@ -32,7 +32,7 @@
 class Character {
     private:
         char* name;
-        ModObj maxHP; short hp; //note: this system cannot represent temp HP
+        ModObj maxHP; HP hp; //hp is ModObj to represent temp hp
         short ac;   //assume armor is static: system cannot represent taking cover
         ModObj speed;   //speed boosts & reductions are representable
         short profBonus;
@@ -59,19 +59,19 @@ class Character {
 
         Attribute attributes[NATT]; //str, dex, con, int, wis, cha
 
-        bool attAdv[NATT];  //true if adv for respective ability
-        bool attDis[NATT];  //true if disadv for respective ability
-
         short nAct; Action** actions; //an array of nAct-many Action*
+        /*create three total action arrays: one for actions that can only
+        be used on the character that holds them, one for actions that should
+        only be used on allies, and one that should only be used on enemies*/
 
     public:
 
         Character(char* Name, short MaxHP, short HP, short AC, short Speed,\
-                  DmgMod DmgMods, Attribute* Attributes, bool* Effects,
-                  Action** Actions, short NAct)
+                  DmgMod DmgMods, Attribute* Attributes, bool* EffectImmunities,
+                  bool* Effects, Action** Actions, short NAct)
         {
             name = Name; //copy by reference since name will never change
-            maxHP.Init(MaxHP); hp = HP;
+            maxHP.Init(MaxHP); hp.Init(HP);
             ac = AC;
             speed.Init(Speed);
             
@@ -91,107 +91,54 @@ class Character {
         void PrintAll() {
             cout << "\n###### " << name << " Info ######";
             cout << "\n\tMax HP: " << maxHP.GetValue();
-            cout << "\n\tCurrent HP: " << hp;
+            cout << "\n\tCurrent HP: " << hp.GetValue();
             cout << "\n\tAC: " << ac;
             cout << "\n\tSpeed: " << speed.GetValue();
             cout << "\n\tDamage Modifier Array: ";
             for(int i=0; i<NDMGTYPE; i++) {
-                cout << "\n\t\tDmgType[" << i << "]:" << dmgTypeDict[i] << ", mod: " << damageMods[i];
+                cout << "\n\t\tDmgType[" << dmgTypeDict[i] << ", mod: " << damageMods[i];
             }
             cout << "\n\tActive effects:";
             for(int i=0; i<NEFFECT; i++) {
-                cout << "\n\t\teffect " << statusDict[i] << ": " << effects[i];
+                cout << "\n\t\t" << statusDict[i] << ": " << effects[i];
             }
-
             cout << "\n\tAttribute scores:";
             for(short att=0; att<NATT; att++) {
                 cout << "\n\t\t" << attDict[att] << ": " << attributes[att].GetScore();
             }
-            
-            cout << "\n\tAction types:";
+            cout << "\n\tActions:";
             for(int i=0; i<nAct; i++) {
-                cout << "\n\t\tAction[" << i << "] type: " << actions[i]->GetName();
+                cout << "\n\t\tAction[" << i << "]: " << actions[i]->GetName();
             }
-
-
-
         }
 
-        short GetHP() {return hp;}
+        short GetHP() {return hp.GetValue();}
         short GetSpeed() {return speed.GetValue();}
-
+        /*Used by the AI to retrieve a particular action from a character*/
+        Action* GetAction(short actionID) { return actions[actionID]; }
+        bool* GetActiveEffects() {
+            /* Should only be affected by an effect that you have AND that
+            you are NOT immune to*/
+            bool activeEffects[NEFFECT];
+            for(short i=0; i<NEFFECT; i++) {
+                activeEffects[i] = effects[i] * effectImmunities[i]; }
+        }
+        
         /***********************************************************
-         * Function: ApplyAction(MeleeAtk* action, short hitMod, short dmgMod)
+         * Function: ReceiveAction(MeleeAtk* action, short hitMod, short dmgMod)
          * 
-         * Desc: Applies a particular action to this character.
-         *       The action may come from another character, or
-         *       it could potentially come from this character.
-         *  
-         *       Since this action is an attack, the character may lose 
-         *       health and/or receive a negative effect.
+         * Desc: Takes in another character's attributes, activeEffects,
+         * and one of their actions. Then, calculates what would happen to 
+         * this character (the character whom is calling this method) 
+         * based off that information. 
         ***********************************************************/
-        void ApplyAction(MeleeAtk* a, short hitMod, short dmgMod) {
-            cout << "\nlooks like this is a melee attack";
+        void ReceiveAction(MeleeAtk* ma, Attribute* attributes, bool* activeEffects) {
+            
             return;
         }
 
-        /***********************************************************
-         * Function: ApplyAction(RangedAtk* action, short hitMod, short dmgMod)
-         * 
-         * Desc: Applies a particular action to this character.
-         *       The action may come from another character, or
-         *       it could potentially come from this character.
-         *  
-         *       Since this action is an attack, the character may lose 
-         *       health and/or receive a negative effect.
-        ***********************************************************/
-        void ApplyAction(RangedAtk* a, short hitMod, short dmgMod) {
-            cout << "\nlooks like this is a ranged attack";
-            return;
-        }
+        /*
+        Attacked.ReceiveAction(Attacker.GetAction(0), Attacker.GetAtt(), Attack.GetEffects() )
+        */
 
-        /***********************************************************
-         * Function: ApplyAction(DamageSave* action, short dmgMod)
-         * 
-         * Desc: Applies a particular action to this character.
-         *       The action may come from another character, or
-         *       it could potentially come from this character.
-         *  
-         *       Since this action is an attack, the character may lose 
-         *       health and/or receive a negative effect.
-        ***********************************************************/
-        void ApplyAction(DamageSave* a, short dmgMod) {
-            cout << "\nlooks like this is a Damage Save";
-            return;
-        }
-
-        /***********************************************************
-         * Function: ApplyAction(ConditionSave* action)
-         * 
-         * Desc: Applies a particular action to this character.
-         *       The action may come from another character, or
-         *       it could potentially come from this character.
-         *  
-         *       Since this action is an attack, the character may lose 
-         *       health and/or receive a negative effect.
-        ***********************************************************/
-        void ApplyAction(ConditionSave* a) {
-            cout << "\nlooks like this is a Condition Save";
-            return;
-        }
-
-        /***********************************************************
-         * Function: ApplyAction(HealBuff* action, short hitMod, short healMod)
-         * 
-         * Desc: Applies a particular action to this character.
-         *       The action may come from another character, or
-         *       it could potentially come from this character.
-         *  
-         *       Since this action is an buff, the character may recieve 
-         *       health and/or receive a positive effect.
-        ***********************************************************/
-        void ApplyAction(HealBuff* a, short hitMod, short healMod) {
-            cout << "\nlooks like this is a Condition Save";
-            return;
-        }
 };
