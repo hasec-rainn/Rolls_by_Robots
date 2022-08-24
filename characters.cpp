@@ -125,15 +125,64 @@ class Character {
         }
         
         /***********************************************************
-         * Function: ReceiveAction(MeleeAtk* action, short hitMod, short dmgMod)
+         * Function: ReceiveAction(MeleeAtk*, Attribute*, 
+         *           bool*, short profBonus
+         * 
+         * Note: the bool* should be created from the character method
+         * "GetActiveEffects"
          * 
          * Desc: Takes in another character's attributes, activeEffects,
          * and one of their actions. Then, calculates what would happen to 
          * this character (the character whom is calling this method) 
          * based off that information. 
         ***********************************************************/
-        void ReceiveAction(MeleeAtk* ma, Attribute* attributes, bool* activeEffects) {
-            
+        void ReceiveAction(MeleeAtk* ma, Attribute* attributes,\
+        bool* attackerEffects, short ProfBonus) {
+
+            bool* victimEffects = GetActiveEffects();
+
+            //Assume a meleeAtk can't hit a flying creature if the
+            //attacker can't fly as well
+            if(victimEffects[FLYING] && !attackerEffects[FLYING]) {
+                return; }
+
+            short disadvSum = 
+              attackerEffects[BLIND] 
+            + attackerEffects[EX3]
+            + attackerEffects[FRIGHTENED]
+            + attackerEffects[POISONED]
+            + attackerEffects[PRONE]
+            + attackerEffects[RESTRAINED]
+            + victimEffects[INVISIBLE];
+
+            short advSum =
+            victimEffects[BLIND] 
+            + victimEffects[EX3]
+            + victimEffects[FRIGHTENED]
+            + victimEffects[POISONED]
+            + victimEffects[PRONE]
+            + victimEffects[RESTRAINED];
+
+            //Calculate hitChance
+            float hitChance;
+            short toHitBonus = (ma->IsProf() * profBonus) + attributes[ma->GetAtt()].GetMod();
+            if(disadvSum > advSum) { //attacker is rolling with disadv
+                hitChance = ((21 + toHitBonus - ac)^2) / 400;
+            } else if (disadvSum == advSum) { //attacker rolls normally
+                hitChance = (21 + toHitBonus) / 20;
+            } else { //attack is rolling with advantage
+
+            }
+
+            //calculate final damage taken
+            if(damageMods[ma->GetDmgType()] == -2 ) {
+                float damageTaken = (hitChance * ma->GetDamage());
+            } else { //creature is immune, vuln, or takes normal dmg
+                float damageTaken =
+                (hitChance * ma->GetDamage())
+                * damageMods[ma->GetDmgType()];
+            }
+
             return;
         }
 
