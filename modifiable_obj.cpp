@@ -56,8 +56,15 @@ class ModObj {
         void AddMod(short modVal, short duration) {
             nMods++;
 
+            //iterate to next open slot, then place 
             short i=0;
-            while(modifiers[i] != 0) {i++;}
+            while(modifiers[i] != 0) {
+                i++;
+                if(i>=MAXMODS) {
+                    cout << "\nERROR: too many modifiers!";
+                    exit(1);
+                }
+            }
             modifiers[i] = modVal;
             modDur[i] = duration;
         }
@@ -120,6 +127,21 @@ class HP : public ModObj {
                 the damage; baseVal takes a hit to HP too*/
                 baseVal = baseVal - damage;
             }
+        }
+
+        /*Heals "healVal" amount of HP by directly adding to baseVal
+        of HP. Cannot heal for an ammount greater than "hpMax".*/
+        void HealHP(short healVal, short hpMax) {
+            baseVal = baseVal + healVal;
+            if(baseVal > hpMax) {
+                baseVal = hpMax;
+            }
+        }
+
+        /*Grants "tempHP" amount of temporary HP. Exactly the
+        same as "AddMod"*/
+        void GiveTempHP(short tempHP, short dur) {
+            AddMod(tempHP, dur);
         }
 };
 

@@ -51,7 +51,7 @@
 //damage modifier constants
 #define NDMGMOD 4
 #define IMMUNE 0 //immune to damage source
-#define RESIST -2 //resistant to damage source
+#define RESIST 3 //resistant to damage source
 #define NORM 1
 #define VULN 2
 
@@ -85,3 +85,6 @@ const char dmgTypeDict[NDMGTYPE][STRSIZE] =\
                 "Force\0", "Lightning\0", "Necrotic\0", "Piercing\0",\
                 "Poison\0", "Psychic\0", "Radiant\0", "Slashing\0",\
                 "Thunder\0"};
+
+const char dmgModDict[NDMGMOD][STRSIZE] = {"Immune","Normal",\
+                                "Vulnerable","Resistant"};

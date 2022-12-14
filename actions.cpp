@@ -67,6 +67,8 @@ class MeleeAtk : public Action {
 
         /*Returns true is a character uses proficiency bonus for this atk*/
         bool IsProf() { return useProf; }
+        short GetDamage() {return damage;}
+        short GetDmgType() {return dmgType;}
 
         /*Displays the attributes of an Action object via printing to
         stdout*/
@@ -112,6 +114,8 @@ class RangedAtk : public Action {
 
         /*Returns true is a character uses proficiency bonus for this atk*/
         bool IsProf() { return useProf; }
+        short GetDamage() {return damage;}
+        short GetDmgType() {return dmgType;}
 
         /*Displays the attributes of an Action object via printing to
         stdout*/

@@ -54,7 +54,8 @@ class Character {
         True (1) means that the particular effect is active, false means
         the particular effect is not active.*/
         bool effects[NEFFECT];
-        bool effectImmunities[NEFFECT]; //1 for vulnurable, 0 for immune (for bitwise multiplication)
+        bool effectImmunities[NEFFECT]; //1 for vulnurable, 0 for immune
+        bool activeEffects[NEFFECT]; // bitwise multiplication of previous two
         short effectDurations[NEFFECT];
 
         Attribute attributes[NATT]; //str, dex, con, int, wis, cha
@@ -79,12 +80,14 @@ class Character {
             for(short att=0; att<NATT; att++) {
                 attributes[att] = Attributes[att];}
 
+            //copy in DmgMods array, if one was provided
+            damageMods = DmgMods;
+
             //copy in any active effects on the character
             for(int i=0; i<NEFFECT; i++) {
                 effects[i] = Effects[i];}
 
             nAct = NAct; actions = Actions;
-
         }
 
         /*Print everything you'd ever want to know about the character*/
@@ -96,18 +99,28 @@ class Character {
             cout << "\n\tSpeed: " << speed.GetValue();
             cout << "\n\tDamage Modifier Array: ";
             for(int i=0; i<NDMGTYPE; i++) {
-                cout << "\n\t\tDmgType[" << dmgTypeDict[i] << ", mod: " << damageMods[i];
+                cout << "\n\t\tDmgType[" << dmgTypeDict[i] << "]: " << damageMods[i];
+                cout << " (" << dmgModDict[damageMods[i]] << ")";
             }
+
             cout << "\n\tActive effects:";
-            for(int i=0; i<NEFFECT; i++) {
-                cout << "\n\t\t" << statusDict[i] << ": " << effects[i];
+            short nActiveEffects = 0;
+            GetActiveEffects(); // call function to ensure activeEffects is up to date
+            for(short i=0; i<NEFFECT; i++) {
+                if(activeEffects[i] == 1) {
+                    nActiveEffects++;
+                    cout << "\n\t\t" << statusDict[i] << ": " << effects[i]; 
+                }
             }
+            if(nActiveEffects < 1) {cout << "\n\t\t" << "No active effects"; }
+
             cout << "\n\tAttribute scores:";
             for(short att=0; att<NATT; att++) {
                 cout << "\n\t\t" << attDict[att] << ": " << attributes[att].GetScore();
             }
+
             cout << "\n\tActions:";
-            for(int i=0; i<nAct; i++) {
+            for(short i=0; i<nAct; i++) {
                 cout << "\n\t\tAction[" << i << "]: " << actions[i]->GetName();
             }
         }
@@ -119,9 +132,10 @@ class Character {
         bool* GetActiveEffects() {
             /* Should only be affected by an effect that you have AND that
             you are NOT immune to*/
-            bool activeEffects[NEFFECT];
             for(short i=0; i<NEFFECT; i++) {
                 activeEffects[i] = effects[i] * effectImmunities[i]; }
+
+            return activeEffects;
         }
         
         /***********************************************************
@@ -141,8 +155,8 @@ class Character {
 
             bool* victimEffects = GetActiveEffects();
 
-            //Assume a meleeAtk can't hit a flying creature if the
-            //attacker can't fly as well
+            //Assume a melee atk can't hit a flying creature if the
+            //attacker isn't flying as well
             if(victimEffects[FLYING] && !attackerEffects[FLYING]) {
                 return; }
 
@@ -171,19 +185,75 @@ class Character {
             } else if (disadvSum == advSum) { //attacker rolls normally
                 hitChance = (21 + toHitBonus) / 20;
             } else { //attack is rolling with advantage
-
+                hitChance = 1 - ((21 + toHitBonus - ac)^2) / 400;
             }
 
             //calculate final damage taken
-            if(damageMods[ma->GetDmgType()] == -2 ) {
+            if(damageMods[ma->GetDmgType()] == RESIST ) {
                 float damageTaken = (hitChance * ma->GetDamage());
             } else { //creature is immune, vuln, or takes normal dmg
                 float damageTaken =
                 (hitChance * ma->GetDamage())
                 * damageMods[ma->GetDmgType()];
             }
+        }
 
-            return;
+        /***********************************************************
+         * Function: ReceiveAction(MeleeAtk*, Attribute*, 
+         *           bool*, short profBonus
+         * 
+         * Note: the bool* should be created from the character method
+         * "GetActiveEffects"
+         * 
+         * Desc: Takes in another character's attributes, activeEffects,
+         * and one of their actions. Then, calculates what would happen to 
+         * this character (the character whom is calling this method) 
+         * based off that information. 
+        ***********************************************************/
+        void ReceiveAction(RangedAtk* ra, Attribute* attributes,\
+        bool* attackerEffects, short ProfBonus) {
+
+            bool* victimEffects = GetActiveEffects();
+
+            short disadvSum = 
+              attackerEffects[BLIND] 
+            + attackerEffects[EX3]
+            + attackerEffects[FRIGHTENED]
+            + attackerEffects[POISONED]
+            + attackerEffects[PRONE]
+            + attackerEffects[RESTRAINED]
+            + victimEffects[INVISIBLE];
+
+            short advSum =
+            victimEffects[BLIND] 
+            + victimEffects[EX3]
+            + victimEffects[FRIGHTENED]
+            + victimEffects[POISONED]
+            + victimEffects[PRONE]
+            + victimEffects[RESTRAINED];
+
+            //Calculate hitChance
+            float hitChance;
+            short toHitBonus = (ra->IsProf() * profBonus) + attributes[ra->GetAtt()].GetMod();
+            if(disadvSum > advSum) { //attacker is rolling with disadv
+                hitChance = ((21 + toHitBonus - ac)^2) / 400;
+            } else if (disadvSum == advSum) { //attacker rolls normally
+                hitChance = (21 + toHitBonus) / 20;
+            } else { //attack is rolling with advantage
+                hitChance = 1 - ((21 + toHitBonus - ac)^2) / 400;
+            }
+
+            //calculate final damage taken
+            short damageTaken;
+            if(damageMods[ra->GetDmgType()] == RESIST ) {
+                damageTaken = (hitChance * ra->GetDamage());
+            } else { //creature is immune, vuln, or takes normal dmg
+                damageTaken =
+                (hitChance * ra->GetDamage())
+                * damageMods[ra->GetDmgType()];
+            }
+
+            hp.SubHP(damageTaken);
         }
 
         /*
