@@ -143,6 +143,14 @@ class HP : public ModObj {
         void GiveTempHP(short tempHP, short dur) {
             AddMod(tempHP, dur);
         }
+
+        /*Returns how much temporary HP a character has*/
+        short nTempHP() {
+            short sum = 0;
+            for(short i=0; i<MAXMODS; i++) {
+                sum = sum + modifiers[i];}
+            return sum;
+        }
 };
 
 /*Basically just ModObj, but with ability to specifically request
@@ -159,9 +167,41 @@ class Attribute : public ModObj {
         }
 };
 
+/*Container for all the different attributes a DND character has.
+ie, STR, DEX, CON, WIS, INT, and CHA*/
+class CharacterAttributes {
+    private:
+        Attribute attArr[NATT];
+    public:
+        void Init(short str, short dex, short con, short wis, short intel, short cha) {
+            attArr[STR].Init(str);
+            attArr[DEX].Init(dex);
+            attArr[CON].Init(con);
+            attArr[WIS].Init(wis);
+            attArr[INT].Init(intel);
+            attArr[CHA].Init(cha);
+        }
+
+        /*Returns a pointer to a requested attribute*/
+        Attribute* operator[](short att) {
+            return &attArr[att];
+        }
+
+        /*Performs copy by value between two Character Attributes*/
+        void operator=(CharacterAttributes ca) {
+            attArr[STR] = ca.attArr[STR];
+            attArr[DEX] = ca.attArr[DEX];
+            attArr[CON] = ca.attArr[CON];
+            attArr[WIS] = ca.attArr[WIS];
+            attArr[INT] = ca.attArr[INT];
+            attArr[CHA] = ca.attArr[CHA];
+        }
+};
+
 /*Object meant to represent the concept of how a character or
 creature may take more/less damage, depending on the type of damage*/
 class DmgMod {
+
     protected:
         short baseMods[NDMGTYPE]; //base damage modifiers for each damage type
         short nMods;    //number of modifers acting on the base damage modifiers
@@ -272,4 +312,87 @@ class DmgMod {
                 modDur[i] = dmgModifiers.modDur[i];
             }
         }
+};
+
+/*Class that holds the effects currently active on a character.
+Additionally, holds information regarding which effects character
+is immune to.
+When indexed using [], each index corresponds to a specific status effect.
+(see the constants.cpp for which index represents what)
+true means that the particular effect is affecting the character, 
+false the particular effect is not affecting the character.*/
+class Effects {
+    private:
+        bool effects[NEFFECT]; //effects which are applied to the character
+        short effectDurations[NEFFECT];
+
+        bool effectImmunities[NEFFECT]; //1 for vulnurable, 0 for immune
+        bool activeEffects[NEFFECT]; // bitwise multiplication of effects & immunities
+
+    public:
+
+        void Init() {
+            for(short i=0; i<NEFFECT; i++) {
+                effectImmunities[i] = 1;
+                effects[i] = 0;
+                effectDurations[i] = 0;
+            }
+        }
+
+        void Init(bool* EffectImmunities, bool* Effects, short* Durations) {
+            for(short i=0; i<NEFFECT; i++) {
+                effectImmunities[i] = EffectImmunities[i];
+                effects[i] = Effects[i];
+                effectDurations[i] = Durations[i];
+            }
+        }
+
+        /*Adjusts the effects applied to the character as if 
+        one round had passed*/
+        void TimeStep() {
+            short i;
+            for(i=0; i<NEFFECT; i++) { 
+                effectDurations[i]--;
+                if(effectDurations[i] <= 0) { 
+                    effects[i] = false; 
+                    effectDurations[i] = 0; /*Prevents underflow from --*/
+                }
+            }   
+        }
+
+        /*Applies the effect "effect" to the character 
+        for duration "dur"*/
+        void AddEffect(short effect, short dur) {
+            effects[effect] = true;
+            /*If the player is already affected with effect,
+            effect duration is determined by longest*/
+            if(effectDurations[effect] < dur) {
+                effectDurations[effect] = dur;}
+        }
+
+        /*View the effects currently affecting the character.
+        Effect is currently affecting character if 
+        effects[i] x effectImmunities[i] = 1 */
+        bool* GetActive() {
+            for(short i=0; i<NEFFECT; i++) {
+                activeEffects[i] = effects[i] * effectImmunities[i];
+            }
+            return activeEffects;
+        }
+
+        /*Returns true if the effect "effect" is currently affecting
+        the character*/
+        bool operator[](short effect) {
+            return (effects[effect] * effectImmunities[effect]);
+        }
+
+        /*Performs copy by value of two Effect objects*/
+        void operator=(Effects e) {
+            for(short i=0; i<NEFFECT; i++) {
+                effectImmunities[i] = e.effectImmunities[i];
+                effects[i] = e.effects[i];
+                effectDurations[i] = e.effectDurations[i];
+            }
+        }
+
 };
