@@ -2,6 +2,9 @@ import numpy as np
 from math import floor
 import ai_constants as aic
 
+#might try using matrix multiplication to replace self.modifiers
+#and self.mod_durs to see which one runs faster
+
 # Object that has a base value that can be influenced by multiple
 # modifers.
 class ModObj:
@@ -11,6 +14,15 @@ class ModObj:
         self.n_mods = 0    #number of modifers acting on baseVal
         self.modifiers = np.zeros(aic.MAXMODS) #all the values that are modifying the base value
         self.mod_durs = np.zeros(aic.MAXMODS)  #time left for each modifer
+
+    # Returns deep of this ModObj
+    def ReturnCopy(self):
+        copy = ModObj(self.base_val)
+        copy.n_mods = self.n_mods
+        copy.modifiers = self.modifiers.copy()
+        copy.mod_durs = self.mod_durs.copy()
+
+        return copy
 
     def __str__(self):
         return_string = "\nBase Value: " + str(self.base_val)
@@ -61,16 +73,6 @@ class ModObj:
             return self.base_val + np.sum(self.modifiers)
         else: #there's nothing modifying it; just return baseVal
             return self.base_val
-            
-
-    # Returns deep of this ModObj (note that name att is copy by reference)
-    def ReturnCopy(self):
-        copy = ModObj(self.base_val,self.n_mods)
-
-        copy.modifiers = self.modifiers.copy()
-        copy.mod_durs = self.mod_durs.copy()
-
-        return copy
     
 
 
@@ -81,12 +83,22 @@ class Health(ModObj):
         ModObj.__init__(self,max_hp)
         self.max_hp = max_hp
     
+    # Returns deep of this Health Object
+    def ReturnCopy(self):
+        copy = Health(self.base_val)
+        copy.max_hp = self.max_hp
+        copy.n_mods = self.n_mods
+        copy.modifiers = self.modifiers.copy()
+        copy.mod_durs = self.mod_durs.copy()
+
+        return copy
+
     def __str__(self):
         return ("\nVV Max HP VV" + ModObj.__str__(self))
 
     # Takes away an ammount of HP specifed by "damage"
     def SubHP(self, damage):
-        print("damage", damage)
+        #print("damage", damage)
         if(self.n_mods <=0): #nothing fancy: just subtract directly from baseVal
             self.base_val = self.base_val - damage
         else:    #this player has temp HP; eat through temp HP before base HP
@@ -131,242 +143,115 @@ class Attribute(ModObj):
     def __init__(self, att_id, att_score):
         self.att_id = att_id # ID of the attriubte (eg, STR, CON, DEX)
         ModObj.__init__(self, att_score)
-    
+
+    def ReturnCopy(self):
+        copy = Attribute(self.att_id,self.base_val)
+        copy.n_mods = self.n_mods
+        copy.modifiers = self.modifiers.copy()
+        copy.mod_durs = self.mod_durs.copy()
+
     def __str__(self):
-        return ("\nAttribute: " + aic.att_dict[self.att_id] + ModObj.__str__(self))
+        return ("\nAttribute: " + aic.att_dict[self.att_id] 
+                + "\nMod: " + str(self.GetMod())
+                + ModObj.__str__(self)
+                )
         
     def GetScore(self):
-        return self.GetValue(self)
+        return self.GetValue()
 
     
     def GetMod(self):
-        return floor(( self.GetValue(self) - 10) / 2)
+        return floor(( self.GetValue() - 10) / 2)
 
-# /*Container for all the different attributes a DND character has.
-# ie, STR, DEX, CON, WIS, INT, and CHA*/
-# class CharacterAttributes {
-#     private:
-#         Attribute attArr[NATT];
-#     public:
-#         void Init(short str, short dex, short con, short wis, short intel, short cha) {
-#             attArr[STR].Init(str);
-#             attArr[DEX].Init(dex);
-#             attArr[CON].Init(con);
-#             attArr[WIS].Init(wis);
-#             attArr[INT].Init(intel);
-#             attArr[CHA].Init(cha);
-#         }
 
-#         /*Returns a pointer to a requested attribute*/
-#         Attribute* operator[](short att) {
-#             return &attArr[att];
-#         }
 
-#         /*Performs copy by value between two Character Attributes*/
-#         void operator=(CharacterAttributes ca) {
-#             attArr[STR] = ca.attArr[STR];
-#             attArr[DEX] = ca.attArr[DEX];
-#             attArr[CON] = ca.attArr[CON];
-#             attArr[WIS] = ca.attArr[WIS];
-#             attArr[INT] = ca.attArr[INT];
-#             attArr[CHA] = ca.attArr[CHA];
-#         }
-# };
 
-# /*Object meant to represent the concept of how a character or
-# creature may take more/less damage, depending on the type of damage*/
-# class DmgMod {
-
-#     protected:
-#         short baseMods[NDMGTYPE]; #base damage modifiers for each damage type
-#         short nMods;    #number of modifers acting on the base damage modifiers
-#         short modifiers[NDMGTYPE]; #all the values that are modifying the base mods
-#         short modDur[NDMGTYPE];  #time left for each modifer in "modifiers"
-
-#         /*Note that, with this set up, only one thing can be modifying the
-#         base modifier of a particular damage type at once. In other words,
-#         this model cannot represent multiple modifers acting on one damage
-#         type at once.*/
-
-#         /*Removes the modifier of type "dmgType" from modifiers*/
-#         void RemoveMod(short dmgType) {
-#             nMods--;
-#             modifiers[dmgType] = NORM;
-#         }
-
-#     public:
-#         /*Takes no arguments. Assumes all values in baseMods are NORM*/
-#         DmgMod() {
-#             nMods = 0;
-
-#             short i;
-#             for(i=0; i<NDMGTYPE; i++) {
-#                 baseMods[i] = NORM;
-#                 modifiers[i] = 0;
-#                 modDur[i] = 0;
-#             }
-#         }
-
-#         /*Takes one argument: an array that defines how the
-#         character/creature reacts to each damage type*/
-#         DmgMod(short* BaseMods) {
-#             nMods = 0;
-
-#             short i;
-#             for(i=0; i<NDMGTYPE; i++) {
-#                 baseMods[i] = BaseMods[i];
-#                 modifiers[i] = 0;
-#                 modDur[i] = 0;
-#             }
-#         }
-
-#         /*Takes 3 arguments: an array that defines how the
-#         character/creature reacts to each damage type*/
-#         void Init(short* BaseMods, short* Modifiers, short* ModDur, short NMods) {
-#             nMods = NMods;
-
-#             short i;
-#             for(i=0; i<NDMGTYPE; i++) {
-#                 baseMods[i] = BaseMods[i];
-#                 modifiers[i] = Modifiers[i];
-#                 modDur[i] = ModDur[i];
-#             }
-#         }
-
-#         /*Adds the modifier value "mod" of damage type "dmgtype" to
-#         the modifiers array. This modifier lasts for "dur" rounds*/
-#         void AddMod(short dmgType, short mod, short dur) {
-#             nMods++;
-
-#             modifiers[dmgType] = mod;
-#             modDur[dmgType] = dur;
-#         }
+class DmgMod:
         
-#         /*Changes the modifiers as if one round had passed*/
-#         void TimeStep() {
-#             #we don't need to do anything if there are no modifiers
-#             if(nMods > 0) {
-#                 short i;
-#                 for(i=0; i<NDMGTYPE; i++) { 
-#                     modDur[i]--;
-#                     if(modDur[i] == 0) { RemoveMod(i); }
-#                 }
-#             }
-#         }
+    def __init__(self, base_val):
+        self.base_val = base_val #base value that we are modifying
+        self.n_mods = 0    #number of modifers acting on baseVal
+        self.modifiers = np.zeros(aic.MAXDMGMODS) #all the values that are modifying the base value
+        self.mod_durs = np.zeros(aic.MAXDMGMODS)  #time left for each modifer
+    
+    # Returns deep of this ModObj
+    def ReturnCopy(self):
+        copy = DmgMod(self.base_val)
+        copy.n_mods = self.n_mods
+        copy.modifiers = self.modifiers.copy()
+        copy.mod_durs = self.mod_durs.copy()
+        return copy
 
-#         /*Retrieves the character/creatures current damage modifier
-#         for the damage type "dmgType"*/
-#         short operator[](short dmgType) {
-#             if(nMods > 0) {
-#                 if(baseMods[dmgType] == NORM || modifiers[dmgType] == NORM) {
-#                     #Since NORM=1, NORM*otherMod == otherMod
-#                     return baseMods[dmgType] * modifiers[dmgType];
-#                 } else if (baseMods[dmgType] == IMMUNE || modifiers[dmgType] == IMMUNE) {
-#                     return IMMUNE;
-#                 } else if (baseMods[dmgType] == modifiers[dmgType]) {
-#                     /*Note that mod values can only be RESIST or VULN at this point*/
-#                     return baseMods[dmgType];
-#                 } else {
-#                     /*Given that mod values can only be RESIST or VULN, and
-#                     that our mod values are not equal, we must have one RESIST
-#                     and one VULN*/
-#                     return NORM;
-#                 }
-#             } else { #nothing modifying the base mod; just return base
-#                 return baseMods[dmgType];
-#             }
-#         }
+    #Changes the modifiers as if one round had passed*/
+    def TimeStep(self):
+        #we don't need to do anything if there are no modifiers
+        if(self.n_mods > 0):
 
-#         /*Performs copy by value of two DmgMods*/
-#         void operator=(DmgMod dmgModifiers) {
-#             nMods = dmgModifiers.nMods;
-#             short i;
-#             for(i=0;i<NDMGTYPE; i++) {
-#                 baseMods[i] = dmgModifiers.baseMods[i];
-#                 modifiers[i] = dmgModifiers.modifiers[i];
-#                 modDur[i] = dmgModifiers.modDur[i];
-#             }
-#         }
-# };
+            #go through the modifiers, decrementing each one until they reach 0
+            for m in range(0, aic.MAXDMGMODS): 
+                if(self.mod_durs[m] - 1) == 0:
+                    self.n_mods = self.n_mods - 1
+                    self.mod_durs[m] = 0
+                    #setting to 0 is effectively removing it by making it a "normal" damage modifier
+                    self.modifiers[m] = 0
+                elif (self.mod_durs[m] - 1) > 0:
+                    self.mod_durs[m] = self.mod_durs[m] - 1
 
-# /*Class that holds the effects currently active on a character.
-# Additionally, holds information regarding which effects character
-# is immune to.
-# When indexed using [], each index corresponds to a specific status effect.
-# (see the constants.cpp for which index represents what)
-# true means that the particular effect is affecting the character, 
-# false the particular effect is not affecting the character.*/
-# class Effects {
-#     private:
-#         bool effects[NEFFECT]; #effects which are applied to the character
-#         short effectDurations[NEFFECT];
+    def GetValue(self):
+        if(self.n_mods <= 0):
+            return self.base_val
+        else: #we need to combine the other modifiers to our base dmg mod
+            s = np.sum(self.modifiers)
+            
+            if s <= aic.IMMUNE:
+                return aic.IMMUNE
+            elif s <= aic.RESIST:
+                return aic.VULN
+            elif s >= aic.VULN:
+                return aic.VULN
+            else:
+                return aic.NORM
 
-#         bool effectImmunities[NEFFECT]; #1 for vulnurable, 0 for immune
-#         bool activeEffects[NEFFECT]; # bitwise multiplication of effects & immunities
 
-#     public:
 
-#         void Init() {
-#             for(short i=0; i<NEFFECT; i++) {
-#                 effectImmunities[i] = 1;
-#                 effects[i] = 0;
-#                 effectDurations[i] = 0;
-#             }
-#         }
 
-#         void Init(bool* EffectImmunities, bool* Effects, short* Durations) {
-#             for(short i=0; i<NEFFECT; i++) {
-#                 effectImmunities[i] = EffectImmunities[i];
-#                 effects[i] = Effects[i];
-#                 effectDurations[i] = Durations[i];
-#             }
-#         }
+class Effects:
 
-#         /*Adjusts the effects applied to the character as if 
-#         one round had passed*/
-#         void TimeStep() {
-#             short i;
-#             for(i=0; i<NEFFECT; i++) { 
-#                 effectDurations[i]--;
-#                 if(effectDurations[i] <= 0) { 
-#                     effects[i] = false; 
-#                     effectDurations[i] = 0; /*Prevents underflow from --*/
-#                 }
-#             }   
-#         }
+    def __init__(self):
+        self.n_effects = 0
+        self.effects = np.zeros(aic.NEFFECT)
+        self.effect_durs =  np.zeros(aic.NEFFECT)
 
-#         /*Applies the effect "effect" to the character 
-#         for duration "dur"*/
-#         void AddEffect(short effect, short dur) {
-#             effects[effect] = true;
-#             /*If the player is already affected with effect,
-#             effect duration is determined by longest*/
-#             if(effectDurations[effect] < dur) {
-#                 effectDurations[effect] = dur;}
-#         }
+    def ReturnCopy(self):
+        copy = Effects()
+        copy.n_effects = self.n_effects
+        copy.effects = self.effects
+        copy.effect_durs = self.effect_durs
 
-#         /*View the effects currently affecting the character.
-#         Effect is currently affecting character if 
-#         effects[i] x effectImmunities[i] = 1 */
-#         bool* GetActive() {
-#             for(short i=0; i<NEFFECT; i++) {
-#                 activeEffects[i] = effects[i] * effectImmunities[i];
-#             }
-#             return activeEffects;
-#         }
+    def __str__(self):
+        if self.n_effects == 0:
+            print("There are no effects currently active")
+            return
+        
+        print("Active Effects:")
+        for e in range(0,aic.NEFFECT):
+            if self.effect_durs[e] > 0:
+               print("\t",aic.effect_dict[e], "for", self.effect_durs[e])
 
-#         /*Returns true if the effect "effect" is currently affecting
-#         the character*/
-#         bool operator[](short effect) {
-#             return (effects[effect] * effectImmunities[effect]);
-#         }
+    #Changes the modifiers as if one round had passed*/
+    def TimeStep(self):
+        #we don't need to do anything if there are no modifiers
+        if(self.n_effects > 0):
 
-#         /*Performs copy by value of two Effect objects*/
-#         void operator=(Effects e) {
-#             for(short i=0; i<NEFFECT; i++) {
-#                 effectImmunities[i] = e.effectImmunities[i];
-#                 effects[i] = e.effects[i];
-#                 effectDurations[i] = e.effectDurations[i];
-#             }
-#         }
-# };
+            #go through the modifiers, decrementing each one until they reach 0
+            for e in range(0, aic.NEFFECT): 
+                if(self.effect_durs[e] - 1) == 0:
+                    self.n_effects = self.n_effects - 1
+                    self.effect_durs[e] = 0
+                    #setting to 0 is effectively removing it by making it a "normal" damage modifier
+                    self.effects[e] = 0
+                elif (self.effect_durs[e] - 1) > 0:
+                    self.effect_durs[e] = self.effect_durs[e] - 1
+
+    def GetEffects(self):
+        return self.effects

@@ -65,15 +65,17 @@ COMPLEX = 8
 
 #damage modifier constants
 NDMGMOD = 4
-IMMUNE = 0 #immune to damage source
-RESIST = 3 #resistant to damage source
-NORM = 1
-VULN = 2
+IMMUNE = -99 #immune to damage source
+RESIST = -1 #resistant to damage source
+NORM = 0
+VULN = 1
+MAXDMGMODS = 5 #max number of items that can modify a DmgMod's base value
 
 #misc constants
 STRSIZE = 16 #how many char in string
 INF = -1
-MAXMODS = 20 #max number of elements that can modifer base value
+MAXMODS = 20 #max number of items that can modify base value
+
 EMPTY = -1
 
 #pseudo-dictionaries used for converting the constants above
@@ -82,7 +84,7 @@ EMPTY = -1
 att_dict = {STR:"Strength", DEX:"Dexterity", CON:"Constitution",\
 INT:"Intelligence", WIS:"Wisedom", CHA:"Charisma"}
 
-status_dict = {BLIND:"Blinded", CHARMED:"Charmed", DEAFENED:"Deafened",\
+effect_dict = {BLIND:"Blinded", CHARMED:"Charmed", DEAFENED:"Deafened",\
             EX1:"Exhaustion I", EX2:"Exhaustion II",  EX3:"Exhaustion III", EX4:"Exhaustion IV",\
             EX5:"Exhaustion V", EX6:"Exhaustion VI", FRIGHTENED:"Frightened", GRAPPLED:"Grappled",\
             INCAPACITATED:"Incapacitated", INVINCIBLE:"Invincible", INVISIBLE:"Invisible", PARALYZED:"Paralyzed", PETRIFIED:"Petrified",\
