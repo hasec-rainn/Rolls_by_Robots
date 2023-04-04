@@ -1,7 +1,7 @@
 import modifiable_objs as mo
 import ai_constants as aic
 
-desired_tests = ["DmgMod","Attribute"]
+desired_tests = ["Effects"]
 
 if "Health" in desired_tests:
     hp = mo.Health(30)
@@ -25,7 +25,7 @@ if "Health" in desired_tests:
             raise ValueError("For hit " + str(h) + " hp.GetValue()=" + str(hp.GetValue()))
 
     #check to ensure copy by value works
-    if hp.GetValue() == hp_copy.GetValue():
+    if hp.CurrentHP() == hp_copy.CurrentHP():
         raise ValueError("Copy by reference failed: hp and hp_copy have same values")
     
     print("Health class is functional")
@@ -113,3 +113,29 @@ if "DmgMod" in desired_tests:
         raise ValueError("error: fire damage mod is not correct value after TimeStep (2)")
     
     print("DmgMod class is functional")
+
+if "Effects" in desired_tests:
+
+    # make sure basic init and AddEff works
+    eff_obj = mo.Effects()
+    eff_obj.AddEff(aic.CHARMED,3)
+    eff_obj.AddEff(aic.INVISIBLE,5)
+    if eff_obj.effects[aic.CHARMED] == False or eff_obj.effects[aic.INVISIBLE] == False:
+        raise ValueError("error: eff_obj has incorrect value after adding effects")
+    
+    #make sure TimeStep works
+    eff_obj_copy = eff_obj.ReturnCopy()
+    for i in range(0,3):
+        eff_obj.TimeStep()
+    if eff_obj.effects[aic.CHARMED] == True:
+        raise ValueError("error: eff_obj has incorrect value after TimeStep (1)")
+    eff_obj.TimeStep()
+    eff_obj.TimeStep()
+    if eff_obj.effects[aic.INVISIBLE] == True:
+        raise ValueError("error: eff_obj has incorrect value after TimeStep (2)")
+    
+    #make sure ReturnCopy returns a deep copy
+    if eff_obj_copy.effects[aic.CHARMED] == False or eff_obj_copy.effects[aic.INVISIBLE] == False:
+        raise ValueError("error: eff_obj has same values as eff_obj_copy")
+
+    print("Effects class is functional")

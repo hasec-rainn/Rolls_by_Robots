@@ -133,6 +133,9 @@ class Health(ModObj):
     def GiveTempHP(self,temp_hp, dur):
         self.AddMod(temp_hp, dur)
 
+    def CurrentHP(self):
+        return self.GetValue()
+
 
 
 
@@ -253,12 +256,6 @@ class Effects:
         self.effects = np.zeros(aic.NEFFECT)
         self.effect_durs =  np.zeros(aic.NEFFECT)
 
-    def ReturnCopy(self):
-        copy = Effects()
-        copy.n_effects = self.n_effects
-        copy.effects = self.effects
-        copy.effect_durs = self.effect_durs
-
     def __str__(self):
         if self.n_effects == 0:
             print("There are no effects currently active")
@@ -271,6 +268,29 @@ class Effects:
         for e in range(0,aic.NEFFECT):
             if self.effect_durs[e] > 0:
                print("\t",aic.effect_dict[e], "for", self.effect_durs[e])
+
+    def ReturnCopy(self):
+        copy = Effects()
+        copy.n_effects = self.n_effects
+        copy.effects = self.effects.copy()
+        copy.effect_durs = self.effect_durs.copy()
+        return copy
+
+    def AddEff(self, effect, dur):
+        """
+        Adds the specificed effect for a specified duration to the 
+        Effects object.
+
+        The effect should be a value from ai_constants
+        """
+        self.n_effects = self.n_effects + 1
+        if self.effects[effect] == False:
+                self.effects[effect] = True
+                self.effect_durs[effect] = dur
+        else:
+            if self.effect_durs[effect] < dur:
+                self.effect_durs[effect] = dur   
+            
 
     #Changes the modifiers as if one round had passed*/
     def TimeStep(self):

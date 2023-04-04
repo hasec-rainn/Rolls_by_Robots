@@ -77,7 +77,7 @@ class Character:
 
     def ReturnCopy(self):
         """
-        Returns a deep copy* of the character object
+        Returns a deep copy* of the `character` object
         * Note that all_actions is not a deep copy, as it should never
         be changed
         """
@@ -106,3 +106,4 @@ class Character:
         copy.all_actions["reactions"]["neg"] = self.all_actions["reactions"]["neg"]
         copy.all_actions["leg_actions"]["neg"] = self.all_actions["leg_actions"]["neg"]
         
+        return copy
