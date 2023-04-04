@@ -228,14 +228,16 @@ class DmgMod:
         else: #we need to combine the other modifiers to our base dmg mod
             s = np.sum(self.modifiers)
             
-            if s <= aic.IMMUNE:
+            if s == aic.NORM:
+                return aic.NORM
+            elif s <= aic.IMMUNE:
                 return aic.IMMUNE
             elif s <= aic.RESIST:
                 return aic.VULN
             elif s >= aic.VULN:
                 return aic.VULN
             else:
-                return aic.NORM
+                raise ValueError("Error: invalid dmgmod from DmgMod.GetValue")
 
 
 
