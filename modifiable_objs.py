@@ -5,7 +5,7 @@ import ai_constants as aic
 #might try using matrix multiplication to replace self.modifiers
 #and self.mod_durs to see which one runs faster
 
-# Object that has a base value that can be influenced by multiple
+# Object that has a base value that can be influenced by multiple 
 # modifers.
 class ModObj:
 
@@ -15,7 +15,7 @@ class ModObj:
         self.modifiers = np.zeros(aic.MAXMODS) #all the values that are modifying the base value
         self.mod_durs = np.zeros(aic.MAXMODS)  #time left for each modifer
 
-    # Returns deep of this ModObj
+    # Returns deep copy of this ModObj
     def ReturnCopy(self):
         copy = ModObj(self.base_val)
         copy.n_mods = self.n_mods
@@ -155,7 +155,20 @@ class Attribute(ModObj):
                 + "\nMod: " + str(self.GetMod())
                 + ModObj.__str__(self)
                 )
-        
+    
+    def AddMod(self, score_mod, dur):
+        self.n_mods = self.n_mods + 1
+
+        #find an empty slot in self.modifers to place the new mod
+        #should be able to find one in one of the 20 slots...
+        for mod in range(0,aic.MAXMODS):
+            if self.modifiers[mod] == 0:
+                self.modifiers[mod] = score_mod
+                self.mod_durs[mod] = dur
+                return
+
+        raise IndexError("Maximum number of modifiers exceeded in ModObj")
+
     def GetScore(self):
         return self.GetValue()
 
@@ -167,7 +180,6 @@ class Attribute(ModObj):
 
 
 class DmgMod:
-        
     def __init__(self, base_val):
         self.base_val = base_val #base value that we are modifying
         self.n_mods = 0    #number of modifers acting on baseVal
@@ -181,6 +193,19 @@ class DmgMod:
         copy.modifiers = self.modifiers.copy()
         copy.mod_durs = self.mod_durs.copy()
         return copy
+
+    def AddMod(self, mod_val, dur):
+        self.n_mods = self.n_mods + 1
+
+        #find an empty slot in self.modifers to place the new mod
+        #should be able to find one in one of the 5 slots...
+        for mod in range(0,aic.MAXDMGMODS):
+            if self.modifiers[mod] == 0:
+                self.modifiers[mod] = mod_val
+                self.mod_durs[mod] = dur
+                return
+
+        raise IndexError("Maximum number of modifiers exceeded in ModObj")
 
     #Changes the modifiers as if one round had passed*/
     def TimeStep(self):
@@ -232,8 +257,11 @@ class Effects:
         if self.n_effects == 0:
             print("There are no effects currently active")
             return
-        
-        print("Active Effects:")
+        else:
+            print("Active Effects:")
+            for e in range(0,aic.NEFFECT):
+                if(self.effects[e]):
+                    print("\t", aic.effect_dict[e])
         for e in range(0,aic.NEFFECT):
             if self.effect_durs[e] > 0:
                print("\t",aic.effect_dict[e], "for", self.effect_durs[e])

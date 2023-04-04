@@ -1,249 +1,108 @@
-from actions import *
+import actions as act
+import modifiable_objs as mo
+import ai_constants as aic
 
-/********************************************************************
- * Class: Character
- * Desc: Character contains all the relevant information regarding a
- *       player character or NPC.
- * 
- * Ideology: 
-********************************************************************/
 class Character:
     
-    def __init__(self, name, max_hp, hp, ac, speed, prof_bonus):
+    def __init__(self, name, max_hp, ac, speed, prof_bonus,
+                 dmg_mods : dict, attributes : dict, actions, 
+                 bonus_actions : dict, reactions : dict, leg_actions : dict):
+        """
+        Creates a new character object with a specified name, maximum hp, ac,
+        and proficiency bonus.    
+
+        * `dmg_mods` should be a dict of mo.DmgMod objects, where the key = damage type
+        * `attributes` should be a dict of mo.Attribute objects, where key = attribute type
+        * `actions` should be a dict of two arrays with the keys `pos` and `neg`. These arrays contain actions that benefit and harm targets, respectively.
+        * 'bonus_actions', `reactions`, `leg_actions` should have the same structure as `actions`
+        """
         self.name = name
-        self.max_hp = max_hp 
-        self.hp = hp #hp is ModObj to represent temp hp
-        self.ac = ac  #assume armor is static: system cannot represent taking cover
-        self.speed = speed   #speed boosts & reductions are representable
+        self.health = mo.Health(max_hp) 
+        self.ac = mo.ModObj(ac)  #assume armor is static: system cannot represent taking cover
         self.prof_bonus = prof_bonus
+        self.speed = mo.ModObj(speed)   #speed boosts & reductions are representable
+        self.effects = mo.Effects()
 
-    attributes =;
+        self.dmg_mods = {}
+        for type in range(0,aic.NDMGMOD):
+            self.dmg_mods[type] = dmg_mods[type]
 
-    /*dmgMods is an object which details
-    how the character is afflicted by a certain damage type.
-    The value contained for a particular damage type describes how 
-    the character is impacted. 
-    Below are the possible values that may show up:
-
-    0 -> character takes no damage (has immunity to damage source)
-    -2 -> character takes half damage (has resistance to dmg source)
-    1 -> character takes normal damage
-    2 -> character takes double damage (has vulnerability to dmg source)*/
-    DmgMod damageMods;
-    Effects effects;
-
-    short nAct; Action** actions; 
-    #an array of nAct-many Action*
-    /*create three total action arrays: one for actions that can only
-    be used on the character that holds them, one for actions that should
-    only be used on allies, and one that should only be used on enemies*/
-
-    public:
-
-        Character(char* Name, short MaxHP, short HP, short AC, short Speed,\
-                DmgMod DmgMods, CharacterAttributes CA, Effects EFF,\
-                Action** Actions, short NAct)
-        {
-            name = Name; #copy by reference since name will never change
-            maxHP = MaxHP; hp.Init(HP);
-            ac = AC;
-            speed.Init(Speed);
-            #copy in str, dex, con, ... into respective attribute slots
-            attributes = CA;
-            #copy in DmgMods array, if one was provided
-            damageMods = DmgMods;
-            #copy in any active effects on the character
-            effects = EFF;
-            #copy in actions that character can take (and # of actions)
-            nAct = NAct; actions = Actions; #copy by reference
-        }
-
-        #Return methods
-        short CurrentHP() {return hp.GetValue();}
-        short CurrentSpeed() {return speed.GetValue();}
-        short ProfBonus() {return profBonus;}
-        bool* ActiveEffects() { return effects.GetActive(); }
-        void* GetAction(short actionID) { return actions[actionID]; }
-        CharacterAttributes* Attributes() {return (&attributes);}
-
-        /*Print everything you'd ever want to know about the character*/
-        void PrintAll() {
-            cout << "\n###### " << name << " Info ######";
-            cout << "\n\tMax HP: " << maxHP;
-            cout << "\n\tCurrent HP: " << hp.GetValue();
-            cout << "\n\tAC: " << ac;
-            cout << "\n\tSpeed: " << speed.GetValue();
-
-            cout << "\n\tDamage Modifier Array: ";
-            for(int i=0; i<NDMGTYPE; i++) {
-                cout << "\n\t\tDmgType[" << dmgTypeDict[i] << "]: " << damageMods[i];
-                cout << " (" << dmgModDict[damageMods[i]] << ")";
-            }
-
-            cout << "\n\tActive effects:";
-            short nActiveEffects = 0;
-            for(short i=0; i<NEFFECT; i++) {
-                if(effects[i] == true) {
-                    nActiveEffects++;
-                    cout << "\n\t\t" << statusDict[i] << ": " << effects[i]; 
-                }
-            }
-            if(nActiveEffects < 1) {cout << "\n\t\t" << "No active effects"; }
-
-            cout << "\n\tAttribute scores:";
-            for(short att=0; att<NATT; att++) {
-                cout << "\n\t\t" << attDict[att] << ": " << attributes[att]->GetScore();
-            }
-
-            cout << "\n\tActions:";
-            for(short i=0; i<nAct; i++) {
-                cout << "\n\t\tAction[" << i << "]: " << actions[i]->GetName();
-            }
-        }
-
+        self.attributes = {}
+        for att in range(0,aic.NATT):
+            self.attributes[att] = attributes[att]
+        self.used_reaction = False
         
-        /***********************************************************
-         * Function: ReceiveAction(Character* sender, short sentAction)
-         * 
-         * Parameters: Character*, short
-         * 
-         * Desc: Applies the action at index "action" held owned by the
-         *  Character "sender" to the character whom called this method.
-         * 
-         * Ex: A bard is attacked by a goblin's knife atk (action at index 0)
-         *     bard.ReceiveAction(&goblin, 0);
-        ***********************************************************/
-        void ReceiveAction(Character* sender, short action) {
+        self.all_actions = {"actions": {"pos": [], "neg": []},
+                      "bonus_actions": {"pos": [], "neg": []},
+                      "reactions": {"pos": [], "neg": []},
+                      "leg_actions": {"pos": [], "neg": []}
+                      }
+        self.all_actions["actions"]["pos"] = actions["pos"]
+        self.all_actions["bonus_actions"]["pos"] = bonus_actions["pos"]
+        self.all_actions["reactions"]["pos"] = reactions["pos"]
+        self.all_actions["leg_actions"]["pos"] = leg_actions["pos"]
 
-            if(sender->actions[action]->ID() == POLYMORPH) {
-                #do something else
-            } else { #its another type of action, we can handle it.
-                typedef void(*ActionFuncPtr)();
-            }
+        self.all_actions["actions"]["neg"] = actions["neg"]
+        self.all_actions["bonus_actions"]["neg"] = bonus_actions["neg"]
+        self.all_actions["reactions"]["neg"] = reactions["neg"]
+        self.all_actions["leg_actions"]["neg"] = leg_actions["neg"]
+    
+    def __init__(self):
+        """
+        Creates a new, *empty* character object.
+        Should not be called except by ReturnCopy method
+        """
+        self.name = None
+        self.health = mo.Health(-1) 
+        self.ac = mo.ModObj(-1)  #assume armor is static: system cannot represent taking cover
+        self.prof_bonus = -1
+        self.speed = mo.ModObj(-1)   #speed boosts & reductions are representable
+        self.effects = mo.Effects()
 
-            
-        }
+        self.dmg_mods = {}
+        for type in range(0,aic.NDMGMOD):
+            self.dmg_mods[type] = -1
 
-        /*Looks at all the effects afflicting the attacker and the
-        victim, then determines if the attacker has disadvantage,
-        advantage, or just normal hit chance.
-        Returns 1 if attacker has advantage, 0 if normal, or -1 if disadv*/
-        short AttackerAdv(bool* victimEffects, bool* attackerEffects) {
-            short disadvSum = 
-              attackerEffects[BLIND] 
-            + attackerEffects[EX3]
-            + attackerEffects[FRIGHTENED]
-            + attackerEffects[POISONED]
-            + attackerEffects[PRONE]
-            + attackerEffects[RESTRAINED]
-            + victimEffects[INVISIBLE];
-
-            short advSum =
-            victimEffects[BLIND] 
-            + victimEffects[EX3]
-            + victimEffects[FRIGHTENED]
-            + victimEffects[POISONED]
-            + victimEffects[PRONE]
-            + victimEffects[RESTRAINED];
-
-            if(advSum>disadvSum) {
-                return 1;
-            } else if (disadvSum>advSum) {
-                return -1;
-            } else {
-                return 0;
-            }
-        }
+        self.attributes = {}
+        for att in range(0,aic.NATT):
+            self.attributes[att] = -1
+        self.used_reaction = False
+        
+        self.all_actions = {"actions": {"pos": [], "neg": []},
+                      "bonus_actions": {"pos": [], "neg": []},
+                      "reactions": {"pos": [], "neg": []},
+                      "leg_actions": {"pos": [], "neg": []}
+                      }
 
 
-        /***********************************************************
-         * Function: ReceiveAction(MeleeAtk*, Attribute*, 
-         *           bool*, short profBonus
-         * 
-         * Note: the bool* should be created from the character method
-         * "GetActiveEffects"
-         * 
-         * Desc: Takes in another character's attributes, activeEffects,
-         * and one of their actions. Then, calculates what would happen to 
-         * this character (the character whom is calling this method) 
-         * based off that information. 
-        ***********************************************************/
-        void ReceiveMelee(Character* sender, short action) {
-            #Assume a melee atk can't hit a flying creature if the
-            #attacker isn't flying as well
-            if(effects[FLYING] && !sender->ActiveEffects()[FLYING]) {
-                return; }
+    def ReturnCopy(self):
+        """
+        Returns a deep copy* of the character object
+        * Note that all_actions is not a deep copy, as it should never
+        be changed
+        """
+        copy = Character()
+        copy.name = self.name
+        copy.health = self.health.ReturnCopy()
+        copy.ac = self.ac.ReturnCopy()
+        copy.prof_bonus = self.prof_bonus
+        copy.speed = self.speed.ReturnCopy()
+        copy.effects = self.effects.ReturnCopy()
+        
+        for type in range(0,aic.NDMGMOD):
+            copy.dmg_mods[type] = self.dmg_mods[type].ReturnCopy()
 
-            # 1 if attacker has adv, 0 if normal, -1 if disadv
-            short result = AttackerAdv(effects.GetActive(), sender->ActiveEffects());
+        for att in range(0,aic.NATT):
+            copy.attributes[att] = self.attributes[att]
+        copy.used_reaction = self.used_reaction
 
-            #Calculate hitChance
-            MeleeAtk* ma = sender->GetAction(action);
-            float hitChance;
-            short toHitBonus = (ma->IsProf() * profBonus) + attributes[ma->GetAtt()]->GetMod();
-            if(result==-1) { #attacker is rolling with disadv
-                hitChance = ((21 + toHitBonus - ac)^2) / 400;
-            } else if (result==0) { #attacker rolls normally
-                hitChance = (21 + toHitBonus) / 20;
-            } else { #attack is rolling with advantage
-                hitChance = 1 - ((21 + toHitBonus - ac)^2) / 400;
-            }
+        copy.all_actions["actions"]["pos"] = self.all_actions["actions"]["pos"]
+        copy.all_actions["bonus_actions"]["pos"] = self.all_actions["bonus_actions"]["pos"]
+        copy.all_actions["reactions"]["pos"] = self.all_actions["reactions"]["pos"]
+        copy.all_actions["leg_actions"]["pos"] = self.all_actions["leg_actions"]["pos"]
 
-            #calculate final damage taken
-            float damageTaken;
-            if(damageMods[ma->GetDmgType()] == RESIST ) {
-                damageTaken = (hitChance * ma->GetDamage());
-            } else { #creature is immune, vuln, or takes normal dmg
-                damageTaken =
-                (hitChance * ma->GetDamage())
-                * damageMods[ma->GetDmgType()];
-            }
-
-            hp.SubHP(damageTaken);
-        }
-
-        /***********************************************************
-         * Function: ReceiveAction(MeleeAtk*, Attribute*, 
-         *           bool*, short profBonus
-         * 
-         * Note: the bool* should be created from the character method
-         * "GetActiveEffects"
-         * 
-         * Desc: Takes in another character's attributes, activeEffects,
-         * and one of their actions. Then, calculates what would happen to 
-         * this character (the character whom is calling this method) 
-         * based off that information. 
-        ***********************************************************/
-        void ReceiveAction(RangedAtk* ra, CharacterAttributes attributes,\
-        bool* attackerEffects, short ProfBonus) {
-
-            # 1 if attacker has adv, 0 if normal, -1 if disadv
-            short result = AttackerAdv(effects.GetActive(), attackerEffects);
-
-            #Calculate hitChance
-            float hitChance;
-            short toHitBonus = (ra->IsProf() * profBonus) + attributes[ra->GetAtt()]->GetMod();
-            if(result==-1) { #attacker is rolling with disadv
-                hitChance = ((21 + toHitBonus - ac)^2) / 400;
-            } else if (result==0) { #attacker rolls normally
-                hitChance = (21 + toHitBonus) / 20;
-            } else { #attack is rolling with advantage
-                hitChance = 1 - ((21 + toHitBonus - ac)^2) / 400;
-            }
-
-            #calculate final damage taken
-            short damageTaken;
-            if(damageMods[ra->GetDmgType()] == RESIST ) {
-                damageTaken = (hitChance * ra->GetDamage());
-            } else { #creature is immune, vuln, or takes normal dmg
-                damageTaken =
-                (hitChance * ra->GetDamage())
-                * damageMods[ra->GetDmgType()];
-            }
-
-            hp.SubHP(damageTaken);
-        }
-
-        /*
-        Attacked.ReceiveAction(Attacker.GetAction(0), Attacker.GetAtt(), Attack.GetEffects() )
-        */
+        copy.all_actions["actions"]["neg"] = self.all_actions["actions"]["neg"]
+        copy.all_actions["bonus_actions"]["neg"] = self.all_actions["bonus_actions"]["neg"]
+        copy.all_actions["reactions"]["neg"] = self.all_actions["reactions"]["neg"]
+        copy.all_actions["leg_actions"]["neg"] = self.all_actions["leg_actions"]["neg"]
+        
