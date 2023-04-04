@@ -149,6 +149,7 @@ class Attribute(ModObj):
         copy.n_mods = self.n_mods
         copy.modifiers = self.modifiers.copy()
         copy.mod_durs = self.mod_durs.copy()
+        return copy
 
     def __str__(self):
         return ("\nAttribute: " + aic.att_dict[self.att_id] 
@@ -186,6 +187,9 @@ class DmgMod:
         self.modifiers = np.zeros(aic.MAXDMGMODS) #all the values that are modifying the base value
         self.mod_durs = np.zeros(aic.MAXDMGMODS)  #time left for each modifer
     
+    def __str__(self):
+        return "\tGetValue:" + str(self.GetValue())
+
     # Returns deep of this ModObj
     def ReturnCopy(self):
         copy = DmgMod(self.base_val)
@@ -233,7 +237,7 @@ class DmgMod:
             elif s <= aic.IMMUNE:
                 return aic.IMMUNE
             elif s <= aic.RESIST:
-                return aic.VULN
+                return aic.RESIST
             elif s >= aic.VULN:
                 return aic.VULN
             else:

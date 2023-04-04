@@ -1,7 +1,7 @@
 import modifiable_objs as mo
 import ai_constants as aic
 
-desired_tests = ["DmgMod","Health", "Attribute"]
+desired_tests = ["DmgMod","Attribute"]
 
 if "Health" in desired_tests:
     hp = mo.Health(30)
@@ -76,7 +76,40 @@ if "Attribute" in desired_tests:
 if "DmgMod" in desired_tests:
     fire = mo.DmgMod(aic.NORM)
 
+    # test that __init__ works
     if fire.GetValue() != aic.NORM:
-        raise ValueError("error: fire damage mod is not correct value")
+        raise ValueError("error: fire damage mod is not correct value from init")
 
-    fire.AddMod(aic.RESIST)
+    #test that AddMod works
+    fire.AddMod(aic.VULN,6)
+    if fire.GetValue() != aic.VULN:
+        raise ValueError("error: fire damage mod is not correct value after AddMod (1)")
+    
+    fire.AddMod(aic.RESIST,5)
+    if fire.GetValue() != aic.NORM:
+        raise ValueError("error: fire damage mod is not correct value after AddMod (2)")
+    
+    fire.AddMod(aic.RESIST,5)
+    if fire.GetValue() != aic.RESIST:
+        print(fire)
+        raise ValueError("error: fire damage mod is not correct value after AddMod (3)")
+    
+    fire.AddMod(aic.RESIST,5)
+    if fire.GetValue() != aic.RESIST:
+        raise ValueError("error: fire damage mod is not correct value after AddMod (4)")
+    
+    fire.AddMod(aic.IMMUNE,5)
+    if fire.GetValue() != aic.IMMUNE:
+        raise ValueError("error: fire damage mod is not correct value after AddMod (5)")
+    
+    #test that TimeStep works
+    for i in range(0,5):
+        fire.TimeStep()
+    if fire.GetValue() != aic.VULN:
+        raise ValueError("error: fire damage mod is not correct value after TimeStep (1)")
+    
+    fire.TimeStep()
+    if fire.GetValue() != aic.NORM:
+        raise ValueError("error: fire damage mod is not correct value after TimeStep (2)")
+    
+    print("DmgMod class is functional")
