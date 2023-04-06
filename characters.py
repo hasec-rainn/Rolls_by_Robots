@@ -5,7 +5,7 @@ import ai_constants as aic
 class Character:
     
     def __init__(self, name, max_hp, ac, speed, prof_bonus,
-                 dmg_mods : dict, attributes : dict, actions, 
+                 dmg_mods : dict, attributes : dict, actions: dict, 
                  bonus_actions : dict, reactions : dict, leg_actions : dict):
         """
         Creates a new character object with a specified name, maximum hp, ac,
@@ -13,7 +13,7 @@ class Character:
 
         * `dmg_mods` should be a dict of mo.DmgMod objects, where the key = damage type
         * `attributes` should be a dict of mo.Attribute objects, where key = attribute type
-        * `actions` should be a dict of two arrays with the keys `pos` and `neg`. These arrays contain actions that benefit and harm targets, respectively.
+        * `actions` should be a dict containing two arrays keyed as `pos` and `neg`. These arrays contain actions that benefit and harm targets, respectively.
         * 'bonus_actions', `reactions`, `leg_actions` should have the same structure as `actions`
         """
         self.name = name
@@ -46,42 +46,28 @@ class Character:
         self.all_actions["bonus_actions"]["neg"] = bonus_actions["neg"]
         self.all_actions["reactions"]["neg"] = reactions["neg"]
         self.all_actions["leg_actions"]["neg"] = leg_actions["neg"]
-    
-    def __init__(self):
-        """
-        Creates a new, *empty* character object.
-        Should not be called except by ReturnCopy method
-        """
-        self.name = None
-        self.health = mo.Health(-1) 
-        self.ac = mo.ModObj(-1)  #assume armor is static: system cannot represent taking cover
-        self.prof_bonus = -1
-        self.speed = mo.ModObj(-1)   #speed boosts & reductions are representable
-        self.effects = mo.Effects()
-
-        self.dmg_mods = {}
-        for type in range(0,aic.NDMGMOD):
-            self.dmg_mods[type] = -1
-
-        self.attributes = {}
-        for att in range(0,aic.NATT):
-            self.attributes[att] = -1
-        self.used_reaction = False
-        
-        self.all_actions = {"actions": {"pos": [], "neg": []},
-                      "bonus_actions": {"pos": [], "neg": []},
-                      "reactions": {"pos": [], "neg": []},
-                      "leg_actions": {"pos": [], "neg": []}
-                      }
-
 
     def ReturnCopy(self):
         """
-        Returns a deep copy* of the `character` object
+        Returns a deep copy* of the `character` object.
+        Used when creating a duplicate of a character so it can be modified in a
+        new state
         * Note that all_actions is not a deep copy, as it should never
         be changed
         """
-        copy = Character()
+
+        dmg_mods = {}
+        for type in range(0,aic.NDMGMOD):
+            self.dmg_mods[type] = -1
+
+        attributes = {}
+        for att in range(0,aic.NATT):
+            self.attributes[att] = -1
+
+        copy = Character(None,-1,-1,-1,-1,dmg_mods,attributes,
+                         {"pos":[],"neg":[]}, {"pos":[],"neg":[]},
+                         {"pos":[],"neg":[]}, {"pos":[],"neg":[]}
+                         )
         copy.name = self.name
         copy.health = self.health.ReturnCopy()
         copy.ac = self.ac.ReturnCopy()
@@ -107,3 +93,9 @@ class Character:
         copy.all_actions["leg_actions"]["neg"] = self.all_actions["leg_actions"]["neg"]
         
         return copy
+    
+    def RecieveAction(self, action : act.Action):
+        if action.id == aic.MELEEATK:
+            print("looks like a melee attack!")
+        elif action.id == aic.RANGEDATK:
+            print("looks like a ranged attack")

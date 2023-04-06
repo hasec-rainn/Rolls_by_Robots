@@ -51,7 +51,7 @@ RESTRAINED = 18
 STUNNED = 19
 UNCONSCIOUS = 20
 
-#action type based constants
+#action based constants
 NACTIONS = 9
 UNDEF = -1
 MELEEATK = 1
@@ -62,12 +62,14 @@ HEAL = 5
 CONDITIONBUFF = 6
 POLYMORPH = 7
 COMPLEX = 8
+# stands for "Empty Action Set" 
+EAS = {"pos": [], "neg": []}
 
 #damage modifier constants
 NDMGMOD = 4
 IMMUNE = -99 #immune to damage source
 RESIST = -1 #resistant to damage source
-NORM = 0
+NORM = 0 
 VULN = 1
 MAXDMGMODS = 5 #max number of items that can modify a DmgMod's base value
 

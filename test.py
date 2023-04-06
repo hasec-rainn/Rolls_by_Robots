@@ -1,7 +1,9 @@
 import modifiable_objs as mo
 import ai_constants as aic
+import characters as chr
+import actions as act
 
-desired_tests = ["Effects"]
+desired_tests = ["Character"]
 
 if "Health" in desired_tests:
     hp = mo.Health(30)
@@ -29,6 +31,9 @@ if "Health" in desired_tests:
         raise ValueError("Copy by reference failed: hp and hp_copy have same values")
     
     print("Health class is functional")
+
+
+
 
 if "Attribute" in desired_tests:
 
@@ -73,6 +78,9 @@ if "Attribute" in desired_tests:
     
     print("Attribute class is functional")
 
+
+
+
 if "DmgMod" in desired_tests:
     fire = mo.DmgMod(aic.NORM)
 
@@ -114,6 +122,9 @@ if "DmgMod" in desired_tests:
     
     print("DmgMod class is functional")
 
+
+
+
 if "Effects" in desired_tests:
 
     # make sure basic init and AddEff works
@@ -139,3 +150,35 @@ if "Effects" in desired_tests:
         raise ValueError("error: eff_obj has same values as eff_obj_copy")
 
     print("Effects class is functional")
+
+
+
+
+if "Character" in desired_tests:
+    dmg_mods = {}
+    for dm in range(0,aic.NDMGMOD):
+        dmg_mods[dm] = mo.DmgMod(aic.NORM)
+    att = {}
+    for a in range(0,aic.NATT):
+        att[a] = mo.Attribute(a,8)
+
+    boblins_actions = {"pos":[act.MeleeAtk("tiny fists", aic.STR,5,2,aic.BLDG,True)], "neg": []}
+
+    boblin_goblin = chr.Character("Boblin the Goblin", 10, 12, 25, 2, dmg_mods,att,
+                                  boblins_actions, aic.EAS,aic.EAS,aic.EAS)
+    
+    #check name
+    if boblin_goblin.name != "Boblin the Goblin":
+        raise ValueError("error: boblin has the incorrect name")
+    
+    #check actions
+    if boblin_goblin.all_actions["actions"]["pos"][0].name != "tiny fists":
+        raise ValueError("error: tiny fists is not in the pos array")
+    if len(boblin_goblin.all_actions["actions"]["neg"]) > 0:
+        raise ValueError("error: the neg array doesn't contains actions")
+    if len(boblin_goblin.all_actions["bonus_actions"]["pos"]) > 0 or len(boblin_goblin.all_actions["bonus_actions"]["neg"]) > 0:
+        raise ValueError("bonus_actions is non-empty")
+    if len(boblin_goblin.all_actions["reactions"]["pos"]) > 0 or len(boblin_goblin.all_actions["reactions"]["neg"]) > 0:
+        raise ValueError("reactions is non-empty")
+    if len(boblin_goblin.all_actions["leg_actions"]["pos"]) > 0 or len(boblin_goblin.all_actions["leg_actions"]["neg"]) > 0:
+        raise ValueError("leg_actions is non-empty")

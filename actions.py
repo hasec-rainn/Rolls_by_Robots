@@ -26,9 +26,22 @@ class Action:
 
 
 class MeleeAtk(Action):
+    """
+    Creates a new MeleeAtk action. 
+    `MeleeAtk` is nearly identical to `RangedAtk`, except that if an action is a `MeleeAtk`,
+    it is assumed that it will not hit a character with the `fly` effect unless the user also
+    is flying
+    * `name`: action's name. Has no impact other than when printing attack.
+    * `att`: constant integer from `aic` representing the attribute the attack uses.
+    * `range`: range (in feet) of the melee attack.
+    * `damage`: damage of the attack. Given attacks in DND rely on dice, it should be the expected/avg damage roll.
+    * `dmg_type`: constant integer from `aic` representing the damage type of the attack.
+    * `use_prof`: boolean used to determine if `prof_bonus` of a `character` is used for this attack
+    * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
+    """
     id = aic.MELEEATK
 
-    def __init__(self, name, att, range, damage, dmg_type, use_prof, aoe=None):
+    def __init__(self, name:str, att:int, range:int, damage:int, dmg_type:int, use_prof:bool, aoe:int=None):
         self.name = name
         self.att = att
         self.range = range
@@ -49,9 +62,21 @@ class MeleeAtk(Action):
 
 
 class RangedAtk(Action):
+    """
+    Creates a new RangedAtk action. 
+    `RangedAtk` is nearly identical to `MeleedAtk`, except that if an action is a `RangedAtk`,
+    it is always capable of hitting a character with the `fly` effect
+    * `name`: action's name. Has no impact other than when printing attack.
+    * `att`: constant integer from `aic` representing the attribute the attack uses.
+    * `range`: range (in feet) of the melee attack.
+    * `damage`: damage of the attack. Given attacks in DND rely on dice, it should be the expected/avg damage roll.
+    * `dmg_type`: constant integer from `aic` representing the damage type of the attack.
+    * `use_prof`: boolean used to determine if `prof_bonus` of a `character` is used for this attack
+    * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
+    """
     id = aic.RANGEDATK
 
-    def __init__(self, name, att, range, damage, dmg_type, use_prof, aoe=None):
+    def __init__(self, name:str, att:int, range:int, damage:int, dmg_type:int, use_prof:bool, aoe:int=None):
         self.name = name
         self.att = att
         self.range = range
@@ -74,10 +99,22 @@ class RangedAtk(Action):
 # Action that requires someone to make a saving throw. 
 # If they fail, they take damage.
 class DamageSave(Action):
-    
+    """
+    Creates a new DamageSave action.
+    DamageSave forces a character to make a saving throw or take damage.
+    * `name`: action's name. Has no impact other than when printing attack.
+    * `att`: constant integer from `aic` representing the attribute the attack uses.
+    * `range`: range (in feet) of the melee attack.
+    * `damage`: damage of the attack. Given attacks in DND rely on dice, it should be the expected/avg damage roll.
+    * `dmg_type`: constant integer from `aic` representing the damage type of the attack.
+    * `save_type`: constant int from `aic` representing the save type (eg, CON, INT, WIS)
+    * `take_half`: bool dictating if a creature will still take half damage even if they succeed the save
+    * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
+    """
     id = aic.DAMAGESAVE
     
-    def __init__(self, name, att, range, damage, dmg_type, save_type, take_half, aoe=None):
+    def __init__(self, name:str, att:int, range:int, damage:int, 
+                 dmg_type:int, save_type:int, take_half:bool, aoe:int=None):
         self.name = name
         self.att = att
         self.range = range
@@ -111,6 +148,22 @@ class DamageSave(Action):
 # Action that requires someone to make a saving throw. 
 # If they fail, they are afflicted with a condition for a duration.
 class ConditionSave(Action):
+    """
+    Creates a new ConditionSave action.
+    ConditionSave forces a character to make a saving throw or fall under some effect.
+    * `name`: action's name. Has no impact other than when printing attack.
+    * `att`: constant integer from `aic` representing the attribute the attack uses.
+    * `range`: range (in feet) of the melee attack.
+    * `condition`: constant int from `aic`. 
+    * `dmg_type`: constant int from `aic` representing the damage type of the attack.
+    * `save_type`: constant int from `aic` representing the save type (eg, CON, INT, WIS)
+    * `take_half`: bool dictating if a creature will still take half damage even if they succeed the save
+    * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
+
+    Unlike `damage` (number), you can't weight an `effect` (bool) by its success rate. This makes
+    determining when to apply effects difficult. In normal circumstances, if a character would fail
+    the save on average, then the character will always have the effect applied to them.
+    """
     id = aic.CONDITIONSAVE
     
     def __init__(self, name, att, range, condition, duration, save_type, aoe=None):
@@ -177,16 +230,16 @@ class Heal(Action):
         )
 
 
-default_action = Action("default","dex",10)
-melee = MeleeAtk("sword","str",5,25,"slash",True)
-ranged = RangedAtk("bow","dex",300,10,"pierce",True)
-earth_shatter = DamageSave("Earth Shatter", "str",30,50,"bludgeon","dex",True)
-color_spray = ConditionSave("color spray","int",30,"blind",10,"wis",25)
-rage = ConditionBuff("Rage",aic.STR,aic.SELF,"Enraged",100,True)
-lay_on_hands = Heal("Lay On Hands", aic.CHA, aic.TOUCH, 20)
+# default_action = Action("default","dex",10)
+# melee = MeleeAtk("sword","str",5,25,"slash",True)
+# ranged = RangedAtk("bow","dex",300,10,"pierce",True)
+# earth_shatter = DamageSave("Earth Shatter", "str",30,50,"bludgeon","dex",True)
+# color_spray = ConditionSave("color spray","int",30,"blind",10,"wis",25)
+# rage = ConditionBuff("Rage",aic.STR,aic.SELF,"Enraged",100,True)
+# lay_on_hands = Heal("Lay On Hands", aic.CHA, aic.TOUCH, 20)
 
-a_list = [default_action,melee,ranged,earth_shatter,color_spray,rage, lay_on_hands]
+# a_list = [default_action,melee,ranged,earth_shatter,color_spray,rage, lay_on_hands]
 
-for action in a_list:
-    print(action)
-    print("\n")
+# for action in a_list:
+#     print(action)
+#     print("\n")
