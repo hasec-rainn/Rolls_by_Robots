@@ -47,6 +47,12 @@ class Character:
         self.all_actions["reactions"]["neg"] = reactions["neg"]
         self.all_actions["leg_actions"]["neg"] = leg_actions["neg"]
 
+    def __str__(self) -> str:
+        return ("Character " + str(self.name) + "Overview:"
+        + "\n\t" + str(self.health)
+        + "\n\tAC: " + str(self.ac) 
+        )
+
     def ReturnCopy(self):
         """
         Returns a deep copy* of the `character` object.
@@ -92,8 +98,8 @@ class Character:
         copy.all_actions["reactions"]["neg"] = self.all_actions["reactions"]["neg"]
         copy.all_actions["leg_actions"]["neg"] = self.all_actions["leg_actions"]["neg"]
         
-        return copy
-    
+        return copy    
+
     def RecieveAction(self, action : act.Action):
         if action.id == aic.MELEEATK:
             print("looks like a melee attack!")
