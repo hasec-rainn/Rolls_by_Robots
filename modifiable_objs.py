@@ -25,14 +25,14 @@ class ModObj:
         return copy
 
     def __str__(self):
-        return_string = "\nBase Value: " + str(self.base_val)
+        return_string = "\n\tBase Value: " + str(self.base_val)
         if self.n_mods > 0:
-            return_string += "\nNumber of mods: " + str(self.n_mods)
-            return_string += "\nModified Value: " + str(self.GetValue())
+            return_string += "\n\tNumber of mods: " + str(self.n_mods)
+            return_string += "\n\tModified Value: " + str(self.GetValue())
         for m in range(0,aic.MAXMODS):
             if self.modifiers[m] != 0:
-                return_string += ("\nMod[" + str(m) + "] = " + str(self.modifiers[m]) 
-                + "\t(duration = " + str(self.mod_durs[m]) + ")")
+                return_string += ("\n\tMod[" + str(m) + "] = " + str(self.modifiers[m]) 
+                + "\t\t(duration = " + str(self.mod_durs[m]) + ")")
         return return_string
 
     def AddMod(self, mod_val, dur):
@@ -94,7 +94,7 @@ class Health(ModObj):
         return copy
 
     def __str__(self):
-        return ("\nVV Max HP VV" + ModObj.__str__(self))
+        return ("\n\tVV Max HP VV" + ModObj.__str__(self))
 
     # Takes away an ammount of HP specifed by "damage"
     def SubHP(self, damage):
@@ -155,8 +155,8 @@ class Attribute(ModObj):
         return copy
 
     def __str__(self):
-        return ("\nAttribute: " + aic.att_dict[self.att_id] 
-                + "\nMod: " + str(self.GetMod())
+        return ("\n\tAttribute: " + aic.att_dict[self.att_id] 
+                + "\n\tMod: " + str(self.GetMod())
                 + ModObj.__str__(self)
                 )
     
@@ -258,16 +258,13 @@ class Effects:
 
     def __str__(self):
         if self.n_effects == 0:
-            print("There are no effects currently active")
-            return
+            return "\n\tThere are no effects currently active"
         else:
-            print("Active Effects:")
+            s = "Active Effects:"
             for e in range(0,aic.NEFFECT):
                 if(self.effects[e]):
-                    print("\t", aic.effect_dict[e])
-        for e in range(0,aic.NEFFECT):
-            if self.effect_durs[e] > 0:
-               print("\t",aic.effect_dict[e], "for", self.effect_durs[e])
+                    s += ("\t" + str(aic.effect_dict[e]))
+            return s
 
     def ReturnCopy(self):
         copy = Effects()
