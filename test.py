@@ -162,7 +162,7 @@ if "Character" in desired_tests:
     for a in range(0,aic.NATT):
         att[a] = mo.Attribute(a,8)
 
-    boblins_actions = {"pos":[act.MeleeAtk("tiny fists", aic.STR,5,2,aic.BLDG,True)], "neg": []}
+    boblins_actions = {"pos":[act.RangedAtk("lil bow", aic.STR,5,2,aic.BLDG,True)], "neg": [act.MeleeAtk("tiny fists", aic.STR,5,2,aic.BLDG,True)]}
 
     boblin_goblin = chr.Character("Boblin the Goblin", 10, 12, 25, 2, dmg_mods,att,
                                   boblins_actions, aic.EAS,aic.EAS,aic.EAS)
@@ -172,13 +172,16 @@ if "Character" in desired_tests:
         raise ValueError("error: boblin has the incorrect name")
     
     #check actions
-    if boblin_goblin.all_actions["actions"]["pos"][0].name != "tiny fists":
-        raise ValueError("error: tiny fists is not in the pos array")
-    if len(boblin_goblin.all_actions["actions"]["neg"]) > 0:
-        raise ValueError("error: the neg array doesn't contains actions")
+    if boblin_goblin.all_actions["actions"]["neg"][0].name != "tiny fists":
+        raise ValueError("error: tiny fists is not in the neg array")
+    #if len(boblin_goblin.all_actions["actions"]["pos"]) > 0:
+        #raise ValueError("error: the pos array doesn't contains actions")
     if len(boblin_goblin.all_actions["bonus_actions"]["pos"]) > 0 or len(boblin_goblin.all_actions["bonus_actions"]["neg"]) > 0:
         raise ValueError("bonus_actions is non-empty")
     if len(boblin_goblin.all_actions["reactions"]["pos"]) > 0 or len(boblin_goblin.all_actions["reactions"]["neg"]) > 0:
         raise ValueError("reactions is non-empty")
     if len(boblin_goblin.all_actions["leg_actions"]["pos"]) > 0 or len(boblin_goblin.all_actions["leg_actions"]["neg"]) > 0:
         raise ValueError("leg_actions is non-empty")
+    
+    print(boblin_goblin)
+    boblin_goblin.RecieveAction(boblin_goblin.all_actions["actions"]["pos"][0])

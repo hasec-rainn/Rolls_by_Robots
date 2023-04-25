@@ -48,9 +48,12 @@ class Character:
         self.all_actions["leg_actions"]["neg"] = leg_actions["neg"]
 
     def __str__(self) -> str:
-        return ("Character " + str(self.name) + "Overview:"
-        + "\n\t" + str(self.health)
-        + "\n\tAC: " + str(self.ac) 
+        return ("Character '" + str(self.name) + "' Overview:"
+        + "\nHealth" + str(self.health)
+        + "\nAC: " + str(self.ac)
+        + "\nProf Bonus: \n\t" + str(self.prof_bonus)
+        + "\nSpeed: " + str(self.speed)
+        + "\nEffects: " + str(self.effects) 
         )
 
     def ReturnCopy(self):
@@ -88,15 +91,17 @@ class Character:
             copy.attributes[att] = self.attributes[att]
         copy.used_reaction = self.used_reaction
 
-        copy.all_actions["actions"]["pos"] = self.all_actions["actions"]["pos"]
-        copy.all_actions["bonus_actions"]["pos"] = self.all_actions["bonus_actions"]["pos"]
-        copy.all_actions["reactions"]["pos"] = self.all_actions["reactions"]["pos"]
-        copy.all_actions["leg_actions"]["pos"] = self.all_actions["leg_actions"]["pos"]
+        #we don't need to deep copy
+        copy.all_actions = self.all_actions
+        # copy.all_actions["actions"]["pos"] = self.all_actions["actions"]["pos"]
+        # copy.all_actions["bonus_actions"]["pos"] = self.all_actions["bonus_actions"]["pos"]
+        # copy.all_actions["reactions"]["pos"] = self.all_actions["reactions"]["pos"]
+        # copy.all_actions["leg_actions"]["pos"] = self.all_actions["leg_actions"]["pos"]
 
-        copy.all_actions["actions"]["neg"] = self.all_actions["actions"]["neg"]
-        copy.all_actions["bonus_actions"]["neg"] = self.all_actions["bonus_actions"]["neg"]
-        copy.all_actions["reactions"]["neg"] = self.all_actions["reactions"]["neg"]
-        copy.all_actions["leg_actions"]["neg"] = self.all_actions["leg_actions"]["neg"]
+        # copy.all_actions["actions"]["neg"] = self.all_actions["actions"]["neg"]
+        # copy.all_actions["bonus_actions"]["neg"] = self.all_actions["bonus_actions"]["neg"]
+        # copy.all_actions["reactions"]["neg"] = self.all_actions["reactions"]["neg"]
+        # copy.all_actions["leg_actions"]["neg"] = self.all_actions["leg_actions"]["neg"]
         
         return copy    
 
