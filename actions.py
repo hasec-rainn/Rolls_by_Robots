@@ -35,18 +35,20 @@ class MeleeAtk(Action):
     * `att`: constant integer from `aic` representing the attribute the attack uses.
     * `range`: range (in feet) of the melee attack.
     * `damage`: damage of the attack. Given attacks in DND rely on dice, it should be the expected/avg damage roll.
+    * `dice` : the dice associated with the damage of this attack. (eg: 3d4, 2d8, 1d6, etc)
     * `dmg_type`: constant integer from `aic` representing the damage type of the attack.
     * `use_prof`: boolean used to determine if `prof_bonus` of a `character` is used for this attack
     * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
     """
     id = aic.MELEEATK
 
-    def __init__(self, name:str, att:int, range:int, damage:int, dmg_type:int, use_prof:bool, aoe:int=None):
+    def __init__(self, name:str, att:int, range:int, damage:int, dice:str, dmg_type:int, use_prof:bool, aoe:int=None):
         self.name = name
         self.att = att
         self.range = range
         self.aoe = aoe
         self.damage = damage
+        self.dice = dice
         self.dmg_type = dmg_type
         self.use_prof = use_prof
 
@@ -55,6 +57,7 @@ class MeleeAtk(Action):
         "\nID: " + aic.action_dict[self.id]
         + Action.__str__(self)
         + "\nDamage: " + str(self.damage)
+        + "\nDice: " + self.dice
         + "\nDamage Type: " + str(self.dmg_type)
         + "\nUses Proficiency? " + str(self.use_prof)
         )
@@ -70,18 +73,20 @@ class RangedAtk(Action):
     * `att`: constant integer from `aic` representing the attribute the attack uses.
     * `range`: range (in feet) of the melee attack.
     * `damage`: damage of the attack. Given attacks in DND rely on dice, it should be the expected/avg damage roll.
+    * `dice` : the dice associated with the damage of this attack. (eg: 3d4, 2d8, 1d6, etc)
     * `dmg_type`: constant integer from `aic` representing the damage type of the attack.
     * `use_prof`: boolean used to determine if `prof_bonus` of a `character` is used for this attack
     * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
     """
     id = aic.RANGEDATK
 
-    def __init__(self, name:str, att:int, range:int, damage:int, dmg_type:int, use_prof:bool, aoe:int=None):
+    def __init__(self, name:str, att:int, range:int, damage:int, dice:str, dmg_type:int, use_prof:bool, aoe:int=None):
         self.name = name
         self.att = att
         self.range = range
         self.aoe = aoe
         self.damage = damage
+        self.dice = dice
         self.dmg_type = dmg_type
         self.use_prof = use_prof
 
@@ -90,6 +95,7 @@ class RangedAtk(Action):
         "\nID: " + aic.action_dict[self.id]
         + Action.__str__(self)
         + "\nDamage: " + str(self.damage)
+        + "\nDice: " + self.dice
         + "\nDamage Type: " + str(self.dmg_type)
         + "\nUses Proficiency? " + str(self.use_prof)
         )
@@ -106,6 +112,7 @@ class DamageSave(Action):
     * `att`: constant integer from `aic` representing the attribute the attack uses.
     * `range`: range (in feet) of the melee attack.
     * `damage`: damage of the attack. Given attacks in DND rely on dice, it should be the expected/avg damage roll.
+    * `dice` : the dice associated with the damage of this attack. (eg: 3d4, 2d8, 1d6, etc)
     * `dmg_type`: constant integer from `aic` representing the damage type of the attack.
     * `save_type`: constant int from `aic` representing the save type (eg, CON, INT, WIS)
     * `take_half`: bool dictating if a creature will still take half damage even if they succeed the save
@@ -113,13 +120,14 @@ class DamageSave(Action):
     """
     id = aic.DAMAGESAVE
     
-    def __init__(self, name:str, att:int, range:int, damage:int, 
+    def __init__(self, name:str, att:int, range:int, damage:int, dice:str, 
                  dmg_type:int, save_type:int, take_half:bool, aoe:int=None):
         self.name = name
         self.att = att
         self.range = range
         self.aoe = aoe
         self.damage = damage
+        self.dice = dice
         self.dmg_type = dmg_type
         #what type of save (STR,DEX,etc) will recipient make?
         self.save_type = save_type
@@ -131,6 +139,7 @@ class DamageSave(Action):
             "\nID: " + aic.action_dict[self.id]
             + Action.__str__(self)
             + "\nDamage: " + str(self.damage)
+            + "\nDice: " + self.dice
             + "\nDamage Type: " + str(self.dmg_type)
             + "\nSave Type: " + str(self.save_type)
             + "\nHalf on Success? " + str(self.take_half)
@@ -155,9 +164,8 @@ class ConditionSave(Action):
     * `att`: constant integer from `aic` representing the attribute the attack uses.
     * `range`: range (in feet) of the melee attack.
     * `condition`: constant int from `aic`. 
-    * `dmg_type`: constant int from `aic` representing the damage type of the attack.
+    * `duration`: the number of rounds the effect will last
     * `save_type`: constant int from `aic` representing the save type (eg, CON, INT, WIS)
-    * `take_half`: bool dictating if a creature will still take half damage even if they succeed the save
     * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
 
     Unlike `damage` (number), you can't weight an `effect` (bool) by its success rate. This makes
@@ -180,7 +188,7 @@ class ConditionSave(Action):
         return (
             "\nID: " + aic.action_dict[self.id]
             + Action.__str__(self)
-            + "\nCondition: " + str(self.condition)
+            + "\nCondition: " + aic.effect_dict[self.condition]
             + "\nDuration: " + str(self.duration)
             + "\nSave Type: " + str(self.save_type)
         )
@@ -215,18 +223,20 @@ class ConditionBuff(Action):
 class Heal(Action):
     id = aic.HEAL
 
-    def __init__(self, name, att, range, health, aoe=None):
+    def __init__(self, name, att, range, health, dice, aoe=None):
         self.name = name
         self.att = att
         self.range = range
         self.aoe = aoe
-        self.health = health # what condition are they afflicted with?
+        self.health = health
+        self.dice = dice
 
     def __str__(self):
         return (
             "\nID: " + aic.action_dict[self.id]
             + Action.__str__(self)
             + "\nHealing Power: " + str(self.health)
+            + "\nDice: " + self.dice
         )
 
 
