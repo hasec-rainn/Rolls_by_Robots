@@ -1,9 +1,10 @@
 import actions as act
 import modifiable_objs as mo
 import ai_constants as aic
+import random as rand
 
 class Character:
-    
+
     def __init__(self, name, max_hp, ac, speed, prof_bonus,
                  dmg_mods : dict, attributes : dict, actions: dict, 
                  bonus_actions : dict, reactions : dict, leg_actions : dict):
@@ -107,6 +108,105 @@ class Character:
 
     def RecieveAction(self, action : act.Action):
         if action.id == aic.MELEEATK:
-            print("looks like a melee attack!")
+            e_MeleeAtk(action)
         elif action.id == aic.RANGEDATK:
-            print("looks like a ranged attack")
+            pass
+        elif action.id == aic.DAMAGESAVE:
+            pass
+        elif action.id == aic.CONDITIONSAVE:
+            e_ConditionSave(self, action)
+
+    def Foo(self):
+        E_MeleeAtk(self, None)
+
+
+"""
+there are two types of function modes: expected and real
+
+'expected' handles an action according to averages and expected outcomes:
+there is no random number generation (ie, dice rolling).
+Expected is used by the AI to "look ahead" and predict the results of an
+action before actually procedding to do said action.
+
+'real' handles an action as it would occur in real life: by generating a
+random number to represent dice rolls.
+Real is used by the AI to actually take an action after having decided it
+was the best action to take.
+"""
+
+# arrays containing resolve functions. Can be indexed by using aic constants
+# (eg, resolve_expected[aic.MELEEATK] or resolve_real[aic.CONDITIONSAVE])
+resolve_expected = {}
+resolve_real = {}
+
+def Resolve_MeleeAtk(self : Character, sender : Character, a : act.MeleeAtk, real : bool):
+    """
+    Function that modifies a character as if they had just been affected
+    by the described action.
+    * `self` : the character to be affected/changed by the action
+    * `sender` : the character sending the action that will affect `self`
+    * `a` : the action being sent that will affect the character `self`
+    * `real` : boolean value representing if real mode should be used to
+    resolve the action. `True` -> real mode, `False` -> expected mode.
+    """
+    if (real):
+        toHit = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+        if toHit>=
+    else:
+        pass
+
+def Resolve_RangedAtk(self : Character, a : act.RangedAtk, real : bool):
+    """
+    Function that modifies a character as if they had just been affected
+    by the described action.
+    * `self` : the character to be affected/changed by the action
+    * `a` : the action that will affect the character
+    * `real` : boolean value representing if real mode should be used to
+    resolve the action. `True` -> real mode, `False` -> expected mode.
+    """
+    print(self.name)
+
+def Resolve_DamageSave(self : Character, a : act.DamageSave, real : bool):
+    """
+    Function that modifies a character as if they had just been affected
+    by the described action.
+    * `self` : the character to be affected/changed by the action
+    * `a` : the action that will affect the character
+    * `real` : boolean value representing if real mode should be used to
+    resolve the action. `True` -> real mode, `False` -> expected mode.
+    """
+    pass
+
+def Resolve_ConditionSave(self : Character, a : act.ConditionSave, real : bool):
+    """
+    Function that modifies a character as if they had just been affected
+    by the described action.
+    * `self` : the character to be affected/changed by the action
+    * `a` : the action that will affect the character
+    * `real` : boolean value representing if real mode should be used to
+    resolve the action. `True` -> real mode, `False` -> expected mode.
+    """
+    pass
+
+def Resolve_ConditionBuff(self : Character, a : act.ConditionBuff, real : bool):
+    """
+    Function that modifies a character as if they had just been affected
+    by the described action.
+    * `self` : the character to be affected/changed by the action
+    * `a` : the action that will affect the character
+    * `real` : boolean value representing if real mode should be used to
+    resolve the action. `True` -> real mode, `False` -> expected mode.
+    """
+    pass
+
+def Resolve_Heal(self : Character, a : act.Heal, mode : str, real : bool):
+    """
+    Function that modifies a character as if they had just been affected
+    by the described action.
+    * `self` : the character to be affected/changed by the action
+    * `a` : the action that will affect the character
+    * `real` : boolean value representing if real mode should be used to
+    resolve the action. `True` -> real mode, `False` -> expected mode.
+    """
+    pass
+    
