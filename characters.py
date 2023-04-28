@@ -2,11 +2,12 @@ import actions as act
 import modifiable_objs as mo
 import ai_constants as aic
 import random as rand
+import math as mth
 
 class Character:
 
     def __init__(self, name, max_hp, ac, speed, prof_bonus,
-                 dmg_mods : dict, attributes : dict, actions: dict, 
+                 dmg_mods : dict[mo.DmgMod], attributes : dict, actions: dict, 
                  bonus_actions : dict, reactions : dict, leg_actions : dict):
         """
         Creates a new character object with a specified name, maximum hp, ac,
@@ -139,7 +140,23 @@ was the best action to take.
 resolve_expected = {}
 resolve_real = {}
 
-def Resolve_MeleeAtk(self : Character, sender : Character, a : act.MeleeAtk, real : bool):
+#should only by called by other Resolve_ functions
+def __ResolveRealDamage__(self : Character, sender: Character, a : act.MeleeAtk, dmg_modifier : int):
+    #do damage rolls
+    damage = 0
+    for d in range(0,a.dice[aic.QTY]):
+        damage += rand.randint(1,a.dice[aic.DICETYPE])
+
+    #change the damage to reflect the receiver's resistance
+    damage = mth.floor(damage * aic.dmgmod_dict[dmg_modifier])
+
+    #have the receiver take the damage
+    self.health.SubHP(damage)
+
+
+
+
+def ResolveMeleeAtk(self : Character, sender : Character, a : act.MeleeAtk, real : bool):
     """
     Function that modifies a character as if they had just been affected
     by the described action.
@@ -149,13 +166,18 @@ def Resolve_MeleeAtk(self : Character, sender : Character, a : act.MeleeAtk, rea
     * `real` : boolean value representing if real mode should be used to
     resolve the action. `True` -> real mode, `False` -> expected mode.
     """
-    if (real):
+    
+    #resolve the attack in real/expected mode, given that the receiver is
+    #not immune to that damage type
+    dmg_modifier = self.dmg_mods[a.dmg_type].GetValue()
+    if (dmg_modifier != aic.IMMUNE and real):
         toHit = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
-        if toHit>=
-    else:
+        if toHit >= self.ac.GetValue():
+            __ResolveRealDamage__(self,sender,a,dmg_modifier)
+    elif (dmg_modifier != aic.IMMUNE and not real):
         pass
 
-def Resolve_RangedAtk(self : Character, a : act.RangedAtk, real : bool):
+def ResolveRangedAtk(self : Character, a : act.RangedAtk, real : bool):
     """
     Function that modifies a character as if they had just been affected
     by the described action.
@@ -166,7 +188,7 @@ def Resolve_RangedAtk(self : Character, a : act.RangedAtk, real : bool):
     """
     print(self.name)
 
-def Resolve_DamageSave(self : Character, a : act.DamageSave, real : bool):
+def ResolveDamageSave(self : Character, a : act.DamageSave, real : bool):
     """
     Function that modifies a character as if they had just been affected
     by the described action.
@@ -177,7 +199,7 @@ def Resolve_DamageSave(self : Character, a : act.DamageSave, real : bool):
     """
     pass
 
-def Resolve_ConditionSave(self : Character, a : act.ConditionSave, real : bool):
+def ResolveConditionSave(self : Character, a : act.ConditionSave, real : bool):
     """
     Function that modifies a character as if they had just been affected
     by the described action.
@@ -188,7 +210,7 @@ def Resolve_ConditionSave(self : Character, a : act.ConditionSave, real : bool):
     """
     pass
 
-def Resolve_ConditionBuff(self : Character, a : act.ConditionBuff, real : bool):
+def ResolveConditionBuff(self : Character, a : act.ConditionBuff, real : bool):
     """
     Function that modifies a character as if they had just been affected
     by the described action.
@@ -199,7 +221,7 @@ def Resolve_ConditionBuff(self : Character, a : act.ConditionBuff, real : bool):
     """
     pass
 
-def Resolve_Heal(self : Character, a : act.Heal, mode : str, real : bool):
+def ResolveHeal(self : Character, a : act.Heal, mode : str, real : bool):
     """
     Function that modifies a character as if they had just been affected
     by the described action.
