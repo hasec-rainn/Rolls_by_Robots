@@ -72,11 +72,17 @@ RESIST = -1 #resistant to damage source
 NORM = 0 
 VULN = 1
 MAXDMGMODS = 5 #max number of items that can modify a DmgMod's base value
+dmgmod_dict = {IMMUNE:-99, RESIST:0.5, NORM:1, VULN: 2} #used to multiply damage by the corresponding modifier
+
+#Dice related constants
+QTY = 0
+DICETYPE = 1
 
 #misc constants
 STRSIZE = 16 #how many char in string
 INF = -1
 MAXMODS = 20 #max number of items that can modify base value
+
 
 EMPTY = -1
 
