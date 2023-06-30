@@ -81,8 +81,8 @@ RECEIVER_ADV_MELEE_MASK[[STUNNED, RESTRAINED, BLIND,
 
 # a vector that marks receiver.effects that give the attacker disadvantage
 # (on a melee attack) as 1, and then marks every other effect as 0
-RECEIVER_ADV_MELEE_MASK = np.zeros(NEFFECT)
-RECEIVER_ADV_MELEE_MASK[[INVISIBLE]] = 1
+RECEIVER_DISADV_MELEE_MASK = np.zeros(NEFFECT)
+RECEIVER_DISADV_MELEE_MASK[[INVISIBLE]] = 1
 
 #action based constants
 NACTIONS = 9
