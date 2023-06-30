@@ -3,6 +3,7 @@ import modifiable_objs as mo
 import ai_constants as aic
 import random as rand
 import math as mth
+import numpy as np
 
 class Character:
 
@@ -140,14 +141,53 @@ was the best action to take.
 resolve_expected = {}
 resolve_real = {}
 
+
+def __to_hit_mod__(sender : Character, receiver : Character):
+    """
+    Checks if the Character `sender` has advantage, disadvantage, or
+    a normal chance to hit `receiver` with a melee attack. Returns negative
+    on disadvantage, 0 on normal, and positive on advantage.
+    """
+
+    #tally up the total number of things giving the attacker (sender) adv
+    adv_total = sum(sender.effects.GetEffects() * aic.ATTACKER_ADV_MELEE_MASK) \
+    + sum(receiver.effects.GetEffects() * aic.RECEIVER_ADV_MELEE_MASK) 
+
+    #tally up the total number of things giving the attacker
+    disadv_total = sum(sender.effects.GetEffects() * aic.ATTACKER_DISADV_MELEE_MASK) \
+    + sum(receiver.effects.GetEffects() * aic.RECEIVER_DISADV_MELEE_MASK)
+
+    return (adv_total - disadv_total)
+
+
+    
+
 #should only by called by other Resolve_ functions
-def __ResolveRealDamage__(self : Character, sender: Character, a : act.MeleeAtk, dmg_modifier : int):
+def __ResolveRealDamage__(self : Character, sender: Character, a : act.Action, dmg_modifier : int):
     #do damage rolls
     damage = 0
-    for d in range(0,a.dice[aic.QTY]):
+    for d in range(0,a.dice[aic.DICEQTY]):
         damage += rand.randint(1,a.dice[aic.DICETYPE])
 
     #change the damage to reflect the receiver's resistance
+    damage = mth.floor(damage * aic.dmgmod_dict[dmg_modifier])
+
+    #have the receiver take the damage
+    self.health.SubHP(damage)
+
+def __ResolveExpectedDamage__(self : Character, sender: Character, a : act.MeleeAtk,
+                              dmg_modifier : int, hit_mod : int):
+    #make sure to check for advantage/disadvantage
+    hit_chance = -1
+    if hit_mod == 0: #looking at a normal chance to hit
+            hit_chance = (21 + (sender.prof_bonus*a.use_prof) - self.ac.GetValue()) / 20
+    elif hit_mod < 0: #looking at disadvantage to hit
+        hit_chance = (21 + (sender.prof_bonus*a.use_prof) - self.ac.GetValue())**2 / 400
+    else: # looking at advantage to hit
+        hit_chance = 1 - (self.ac.GetValue - (sender.prof_bonus*a.use_prof) - 1)**2 / 400
+
+    #calc expected damage based off dmg modifier and hit chance
+    damage = a.damage * hit_chance
     damage = mth.floor(damage * aic.dmgmod_dict[dmg_modifier])
 
     #have the receiver take the damage
@@ -169,13 +209,30 @@ def ResolveMeleeAtk(self : Character, sender : Character, a : act.MeleeAtk, real
     
     #resolve the attack in real/expected mode, given that the receiver is
     #not immune to that damage type
-    dmg_modifier = self.dmg_mods[a.dmg_type].GetValue()
-    if (dmg_modifier != aic.IMMUNE and real):
-        toHit = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
-        if toHit >= self.ac.GetValue():
-            __ResolveRealDamage__(self,sender,a,dmg_modifier)
-    elif (dmg_modifier != aic.IMMUNE and not real):
-        pass
+    #otherwise, assume the receiver cannot be harmed and do nothing
+    dmg_modifier = self.dmg_mods[a.dmg_type].GetValue() #relevant damage modifier for receiver
+    if (dmg_modifier != aic.IMMUNE):
+        
+        res = __to_hit_mod__(sender, self)
+        #resolve attacks
+        if real:
+            hit_roll = None
+            if res == 0: # looks like the attacker has norm chance to hit
+                hit_roll = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+            elif res < 0: #looks like attacker has disadvantage to hit
+                hit_roll_1 = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+                hit_roll_2 = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+                hit_roll = min(hit_roll_1, hit_roll_2)
+            else: #looks like attacker has advantage to hit
+                hit_roll_1 = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+                hit_roll_2 = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+                hit_roll = max(hit_roll_1, hit_roll_2)
+
+            if hit_roll >= self.ac.GetValue():
+                __ResolveRealDamage__(self,sender,a,dmg_modifier)
+        else:
+            __ResolveExpectedDamage__(self,sender,a,dmg_modifier)
+        
 
 def ResolveRangedAtk(self : Character, a : act.RangedAtk, real : bool):
     """

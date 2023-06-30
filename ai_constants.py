@@ -1,3 +1,5 @@
+import numpy as np
+
 #attribute related constants
 NATT = 6 #number of attributes
 STR = 0
@@ -28,7 +30,7 @@ SLSH = 11 #Slashing damage
 THDR = 12 #Thunder damage
 
 #effect and condition related constants
-NEFFECT = 21
+NEFFECT = 28
 BLIND = 0
 CHARMED = 1
 DEAFENED = 2
@@ -50,6 +52,37 @@ PRONE = 17
 RESTRAINED = 18
 STUNNED = 19
 UNCONSCIOUS = 20
+FLY = 21
+
+GENERAL_ADV = 22
+MELEE_ADV = 23
+RANGEDADV = 24
+GENERAL_DISADV = 25
+MELEE_DISADV = 26
+RANGED_DISADV = 27
+
+# a vector that marks attacker.effects that give an attacker advantage 
+# (on a melee attack) as 1, and then marks every other effect as 0
+ATTACKER_ADV_MELEE_MASK = np.zeros(NEFFECT)
+ATTACKER_ADV_MELEE_MASK[[GENERAL_ADV, MELEE_ADV]] = 1
+
+# a vector that marks attacker.effects that give an attacker disadv 
+# (on a melee attack) as 1, and then marks every other effect as 0
+ATTACKER_DISADV_MELEE_MASK = np.zeros(NEFFECT)
+ATTACKER_DISADV_MELEE_MASK[[GENERAL_DISADV, MELEE_DISADV, BLIND,
+                   EX3, EX4, EX5, 
+                   POISONED, PRONE, RESTRAINED]] = 1
+
+# a vector that marks receiver.effects that give the attacker advantage
+# (on a melee attack) as 1, and then marks every other effect as 0
+RECEIVER_ADV_MELEE_MASK = np.zeros(NEFFECT)
+RECEIVER_ADV_MELEE_MASK[[STUNNED, RESTRAINED, BLIND, 
+                         PARALYZED, PETRIFIED, PRONE, UNCONSCIOUS]] = 1
+
+# a vector that marks receiver.effects that give the attacker disadvantage
+# (on a melee attack) as 1, and then marks every other effect as 0
+RECEIVER_ADV_MELEE_MASK = np.zeros(NEFFECT)
+RECEIVER_ADV_MELEE_MASK[[INVISIBLE]] = 1
 
 #action based constants
 NACTIONS = 9
@@ -75,8 +108,12 @@ MAXDMGMODS = 5 #max number of items that can modify a DmgMod's base value
 dmgmod_dict = {IMMUNE:-99, RESIST:0.5, NORM:1, VULN: 2} #used to multiply damage by the corresponding modifier
 
 #Dice related constants
-QTY = 0
+DICEQTY = 0
 DICETYPE = 1
+
+# Advantage / Disadvantage related constants
+DISADV = -1
+ADV = 1
 
 #misc constants
 STRSIZE = 16 #how many char in string
