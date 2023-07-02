@@ -96,8 +96,12 @@ class Health(ModObj):
     def __str__(self):
         return ("\n\tVV Max HP VV" + ModObj.__str__(self))
 
-    # Takes away an ammount of HP specifed by "damage"
     def SubHP(self, damage):
+        """
+        Takes away an ammount of HP specified by `damage` from the character.
+        First, temporary hp is taken away. Then, when no temporary hp remains,
+        real hp is taken away.
+        """
         #print("damage", damage)
         if(self.n_mods <=0): #nothing fancy: just subtract directly from baseVal
             self.base_val = self.base_val - damage
@@ -128,12 +132,18 @@ class Health(ModObj):
         if(self.base_val > self.max_hp):
             self.base_val = self.max_hp
 
-    #Grants "tempHP" amount of temporary HP. Exactly the
-    #same as "AddMod"*/
     def GiveTempHP(self,temp_hp, dur):
+        """
+        Grants `temp_hp` amount of temporary HP. Alias for
+        `AddMod` method.
+        """
         self.AddMod(temp_hp, dur)
 
     def CurrentHP(self):
+        """
+        alias for `GetValue() method. Returns the hp of the character,
+        including their temporary hit points.
+        """
         return self.GetValue()
 
 
@@ -299,7 +309,6 @@ class Effects:
                 if(self.effect_durs[e] - 1) == 0:
                     self.n_effects = self.n_effects - 1
                     self.effect_durs[e] = 0
-                    #setting to 0 is effectively removing it by making it a "normal" damage modifier
                     self.effects[e] = 0
                 elif (self.effect_durs[e] - 1) > 0:
                     self.effect_durs[e] = self.effect_durs[e] - 1
