@@ -27,7 +27,7 @@ class Character:
         self.effects = mo.Effects()
 
         self.dmg_mods = {}
-        for type in range(0,aic.NDMGMOD):
+        for type in range(0,aic.NDMGTYPE):
             self.dmg_mods[type] = dmg_mods[type]
 
         self.attributes = {}
@@ -69,12 +69,12 @@ class Character:
         """
 
         dmg_mods = {}
-        for type in range(0,aic.NDMGMOD):
-            self.dmg_mods[type] = -1
+        for type in range(0,aic.NDMGTYPE):
+            dmg_mods[type] = -1
 
         attributes = {}
         for att in range(0,aic.NATT):
-            self.attributes[att] = -1
+            attributes[att] = -1
 
         copy = Character(None,-1,-1,-1,-1,dmg_mods,attributes,
                          {"pos":[],"neg":[]}, {"pos":[],"neg":[]},
@@ -87,39 +87,23 @@ class Character:
         copy.speed = self.speed.ReturnCopy()
         copy.effects = self.effects.ReturnCopy()
         
-        for type in range(0,aic.NDMGMOD):
+        for type in range(0,aic.NDMGTYPE):
             copy.dmg_mods[type] = self.dmg_mods[type].ReturnCopy()
 
         for att in range(0,aic.NATT):
             copy.attributes[att] = self.attributes[att]
         copy.used_reaction = self.used_reaction
 
-        #we don't need to deep copy
+        #we don't need to deep copy this
         copy.all_actions = self.all_actions
-        # copy.all_actions["actions"]["pos"] = self.all_actions["actions"]["pos"]
-        # copy.all_actions["bonus_actions"]["pos"] = self.all_actions["bonus_actions"]["pos"]
-        # copy.all_actions["reactions"]["pos"] = self.all_actions["reactions"]["pos"]
-        # copy.all_actions["leg_actions"]["pos"] = self.all_actions["leg_actions"]["pos"]
-
-        # copy.all_actions["actions"]["neg"] = self.all_actions["actions"]["neg"]
-        # copy.all_actions["bonus_actions"]["neg"] = self.all_actions["bonus_actions"]["neg"]
-        # copy.all_actions["reactions"]["neg"] = self.all_actions["reactions"]["neg"]
-        # copy.all_actions["leg_actions"]["neg"] = self.all_actions["leg_actions"]["neg"]
         
         return copy    
 
-    def RecieveAction(self, action : act.Action):
-        if action.id == aic.MELEEATK:
-            e_MeleeAtk(action)
-        elif action.id == aic.RANGEDATK:
-            pass
-        elif action.id == aic.DAMAGESAVE:
-            pass
-        elif action.id == aic.CONDITIONSAVE:
-            e_ConditionSave(self, action)
-
-    def Foo(self):
-        E_MeleeAtk(self, None)
+    def RecieveAction(self, sender : "Character", action : act.Action, real : bool):
+        if action.id == aic.MELEEATK and not real:
+            ResolveMeleeAtk(self, sender, action, real)
+        if action.id == aic.RANGEDATK and not real:
+            ResolveRangedAtk(self, sender, action, real)
 
 
 """
@@ -153,7 +137,7 @@ def __to_hit_mod__(sender : Character, receiver : Character):
     adv_total = sum(sender.effects.GetEffects() * aic.ATTACKER_ADV_MELEE_MASK) \
     + sum(receiver.effects.GetEffects() * aic.RECEIVER_ADV_MELEE_MASK) 
 
-    #tally up the total number of things giving the attacker
+    #tally up the total number of things giving the attacker (sender) disadv
     disadv_total = sum(sender.effects.GetEffects() * aic.ATTACKER_DISADV_MELEE_MASK) \
     + sum(receiver.effects.GetEffects() * aic.RECEIVER_DISADV_MELEE_MASK)
 
@@ -163,7 +147,13 @@ def __to_hit_mod__(sender : Character, receiver : Character):
     
 
 #should only by called by other Resolve_ functions
-def __ResolveRealDamage__(self : Character, sender: Character, a : act.Action, dmg_modifier : int):
+def __ResolveRealDamage__(self : Character, a : act.Action, dmg_modifier : int):
+    """
+    Calculates the ammount of damage the character `self` should take, based
+    off the rolled damage of the action `a` sent by `sender`. 
+    `hit_chance` is not present; if this function is called, the attack 
+    has already hit. 
+    """
     #do damage rolls
     damage = 0
     for d in range(0,a.dice[aic.DICEQTY]):
@@ -175,9 +165,15 @@ def __ResolveRealDamage__(self : Character, sender: Character, a : act.Action, d
     #have the receiver take the damage
     self.health.SubHP(damage)
 
-def __ResolveExpectedDamage__(self : Character, sender: Character, a : act.MeleeAtk,
+#should only be called by other resolve functions
+def __ResolveExpectedDamage__(self : Character, sender: Character, a : act.Action,
                               dmg_modifier : int, hit_mod : int):
-    #make sure to check for advantage/disadvantage
+    """
+    Calculates the ammount of damage the character `self` should take, based
+    off the weighted damage of the action `a` sent by `sender`. 
+    The damage is weighted by its likelyhood to hit: `hit_chance`.
+    `hit_chance`, in turn, is partly affected by the parameter `hit_mod`. 
+    """
     hit_chance = -1
     if hit_mod == 0: #looking at a normal chance to hit
             hit_chance = (21 + (sender.prof_bonus*a.use_prof) - self.ac.GetValue()) / 20
@@ -194,7 +190,19 @@ def __ResolveExpectedDamage__(self : Character, sender: Character, a : act.Melee
     self.health.SubHP(damage)
 
 
-
+def FlightCheck(self : Character, sender : Character):
+    """
+    Checks to make sure that `sender` can affect `self` with an action,
+    based off the assumption that someone who can't fly won't be able
+    to reach someone in melee who can fly.
+    """
+    
+    #if sender can affect, result should be >= 0
+    #this means that either both can fly, both can't fly, or the sender can fly
+    if 0 >= (sender.effects.GetEffects()[aic.FLY] - self.effects.GetEffects()[aic.FLY]):
+        return True
+    else:
+        return False
 
 def ResolveMeleeAtk(self : Character, sender : Character, a : act.MeleeAtk, real : bool):
     """
@@ -210,6 +218,45 @@ def ResolveMeleeAtk(self : Character, sender : Character, a : act.MeleeAtk, real
     #resolve the attack in real/expected mode, given that the receiver is
     #not immune to that damage type
     #otherwise, assume the receiver cannot be harmed and do nothing
+    dmg_modifier = self.dmg_mods[a.dmg_type].GetValue() #relevant damage modifier for receiver
+    if (dmg_modifier != aic.IMMUNE and FlightCheck(self, sender)):
+        
+        res = __to_hit_mod__(sender, self)
+        #resolve attacks
+        if real:
+            hit_roll = None
+            if res == 0: # looks like the attacker has norm chance to hit
+                hit_roll = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+            elif res < 0: #looks like attacker has disadvantage to hit
+                hit_roll_1 = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+                hit_roll_2 = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+                hit_roll = min(hit_roll_1, hit_roll_2)
+            else: #looks like attacker has advantage to hit
+                hit_roll_1 = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+                hit_roll_2 = (a.use_prof*sender.prof_bonus)+rand.randint(1,20)
+                hit_roll = max(hit_roll_1, hit_roll_2)
+
+            if hit_roll >= self.ac.GetValue():
+                __ResolveRealDamage__(self, a, dmg_modifier)
+        else:
+            hit_mod = __to_hit_mod__(sender, self)
+            __ResolveExpectedDamage__(self,sender,a,dmg_modifier,hit_mod)
+
+def ResolveRangedAtk(self : Character, sender : Character, a : act.RangedAtk, real : bool):
+    """
+    Function that modifies a character as if they had just been affected
+    by the described action.
+    * `self` : the character to be affected/changed by the action
+    * `sender` : the character sending the action that will affect `self`
+    * `a` : the action being sent that will affect the character `self`
+    * `real` : boolean value representing if real mode should be used to
+    resolve the action. `True` -> real mode, `False` -> expected mode.
+    """
+    
+    #resolve the attack in real/expected mode, given that the receiver is
+    #not immune to that damage type
+    #otherwise, assume the receiver cannot be harmed and do nothing
+    
     dmg_modifier = self.dmg_mods[a.dmg_type].GetValue() #relevant damage modifier for receiver
     if (dmg_modifier != aic.IMMUNE):
         
@@ -229,21 +276,10 @@ def ResolveMeleeAtk(self : Character, sender : Character, a : act.MeleeAtk, real
                 hit_roll = max(hit_roll_1, hit_roll_2)
 
             if hit_roll >= self.ac.GetValue():
-                __ResolveRealDamage__(self,sender,a,dmg_modifier)
+                __ResolveRealDamage__(self, a, dmg_modifier)
         else:
-            __ResolveExpectedDamage__(self,sender,a,dmg_modifier)
-        
-
-def ResolveRangedAtk(self : Character, a : act.RangedAtk, real : bool):
-    """
-    Function that modifies a character as if they had just been affected
-    by the described action.
-    * `self` : the character to be affected/changed by the action
-    * `a` : the action that will affect the character
-    * `real` : boolean value representing if real mode should be used to
-    resolve the action. `True` -> real mode, `False` -> expected mode.
-    """
-    print(self.name)
+            hit_mod = __to_hit_mod__(sender, self)
+            __ResolveExpectedDamage__(self,sender,a,dmg_modifier,hit_mod)
 
 def ResolveDamageSave(self : Character, a : act.DamageSave, real : bool):
     """
