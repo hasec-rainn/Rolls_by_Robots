@@ -14,7 +14,7 @@ As such, Rolls by Robots will be a powerful tool for ensuring combat encounters 
 
 # How Will it Be Accomplished?
 The underlying idea behind this project is to use A* search and minimax to virtually emulate a fight in D&D. 
-Each combat encounter will be represented as a tree, where nodes are "combat-states" (that contain information about the characters, the enemies, and individuals' health)
+Each combat encounter will be represented as a tree, where nodes are "combat-states" (that contain information about the characters and the enemies)
 and edges are actions (a fighter swinging his sword at a goblin might result in a child combat-state node where the goblin has less health).
 Starting from the initial combat state, A* search will use heuristics to dictate the edge that should be traversed in the tree (the action that will be taken) for the 
 player team and the enemy team until eventually no more traversals can be made (ie, one of the teams emerges victorious).
