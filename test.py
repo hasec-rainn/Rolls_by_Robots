@@ -13,16 +13,16 @@ if "Health" in desired_tests:
         print("hp should have hp.max_health=30")
         raise ValueError("hp.max_health was " + str(hp.max_hp))
 
-    #check to ensure SubHP method works
-    hp.GiveTempHP(10,30)
-    hp.GiveTempHP(5,25)
+    #check to ensure SubHP method works with temp hp
+    hp.GiveTempHP(10,30) #give 10 temp for 30 rounds
+    hp.GiveTempHP(5,25) #give 5 temp for 25 rounds
     hits = [3,4,7,2,1,1]
     hp_copy = hp.ReturnCopy()
-    max_hp = 45
+    max_hp = 45 #30 hp + 10 temp + 5 temp
     for h in hits:
         hp.SubHP(h)
         max_hp = max_hp - h
-        if hp.GetValue() != max_hp:
+        if hp.CurrentHP() != max_hp:
             print("hp.GetValue should be", max_hp)
             raise ValueError("For hit " + str(h) + " hp.GetValue()=" + str(hp.GetValue()))
 
@@ -156,17 +156,18 @@ if "Effects" in desired_tests:
 
 if "Character" in desired_tests:
     dmg_mods = {}
-    for dm in range(0,aic.NDMGMOD):
+    for dm in range(0,aic.NDMGTYPE):
         dmg_mods[dm] = mo.DmgMod(aic.NORM)
+
     att = {}
     for a in range(0,aic.NATT):
         att[a] = mo.Attribute(a,8)
 
-    boblins_actions = {"pos":[act.RangedAtk("lil bow", aic.STR,5,2,aic.BLDG,True)], "neg": [act.MeleeAtk("tiny fists", aic.STR,5,2,aic.BLDG,True)]}
+    boblins_actions = {"pos":[], "neg": [act.MeleeAtk("tiny fists", aic.STR,5,2,[1,4],aic.BLDG,True), act.RangedAtk("lil bow", aic.DEX,30,4,[1,6], aic.PIRC,True)]}
 
     boblin_goblin = chr.Character("Boblin the Goblin", 10, 12, 25, 2, dmg_mods,att,
                                   boblins_actions, aic.EAS,aic.EAS,aic.EAS)
-    
+
     #check name
     if boblin_goblin.name != "Boblin the Goblin":
         raise ValueError("error: boblin has the incorrect name")
@@ -174,8 +175,8 @@ if "Character" in desired_tests:
     #check actions
     if boblin_goblin.all_actions["actions"]["neg"][0].name != "tiny fists":
         raise ValueError("error: tiny fists is not in the neg array")
-    #if len(boblin_goblin.all_actions["actions"]["pos"]) > 0:
-        #raise ValueError("error: the pos array doesn't contains actions")
+    if len(boblin_goblin.all_actions["actions"]["pos"]) > 0:
+        raise ValueError("error: the pos array doesn't contains actions")
     if len(boblin_goblin.all_actions["bonus_actions"]["pos"]) > 0 or len(boblin_goblin.all_actions["bonus_actions"]["neg"]) > 0:
         raise ValueError("bonus_actions is non-empty")
     if len(boblin_goblin.all_actions["reactions"]["pos"]) > 0 or len(boblin_goblin.all_actions["reactions"]["neg"]) > 0:
@@ -183,5 +184,55 @@ if "Character" in desired_tests:
     if len(boblin_goblin.all_actions["leg_actions"]["pos"]) > 0 or len(boblin_goblin.all_actions["leg_actions"]["neg"]) > 0:
         raise ValueError("leg_actions is non-empty")
     
-    print(boblin_goblin)
-    boblin_goblin.RecieveAction(boblin_goblin.all_actions["actions"]["pos"][0])
+    #test the sender/receiver action system
+    boblin_goblin.RecieveAction(boblin_goblin, boblin_goblin.all_actions["actions"]["neg"][0], False)
+    if boblin_goblin.health.CurrentHP() != 9:
+        raise ValueError("Boblin's tinyfist attack didn't do the expected ammount of damage")
+    boblin_goblin.RecieveAction(boblin_goblin, boblin_goblin.all_actions["actions"]["neg"][0], False)
+    if boblin_goblin.health.CurrentHP() != 8:
+        raise ValueError("Boblin's tinyfist attack didn't do the expected ammount of damage")
+
+    print(boblin_goblin.all_actions["actions"]["neg"][1])
+    boblin_goblin.RecieveAction(boblin_goblin, boblin_goblin.all_actions["actions"]["neg"][1], False)
+    if boblin_goblin.health.CurrentHP() != 6:
+        raise ValueError("Boblin's lil bow attack didn't do the expected ammount of damage")
+
+    boblin_goblin.RecieveAction(boblin_goblin, boblin_goblin.all_actions["actions"]["neg"][1], False)
+    if boblin_goblin.health.CurrentHP() != 4:
+        raise ValueError("Boblin's lil bow attack didn't do the expected ammount of damage")
+
+    #Check that Characters can be deep copied
+    boblin_clone = boblin_goblin.ReturnCopy()
+    
+    boblin_goblin.health.HealHP(40)
+    boblin_goblin.ac.AddMod(5,1)
+    boblin_goblin.dmg_mods[aic.BLDG].AddMod(5,1)
+    boblin_goblin.effects.AddEff(aic.INVISIBLE,1)
+    boblin_goblin.speed.AddMod(5,1)
+    boblin_goblin.prof_bonus = 9
+    boblin_goblin.attributes[aic.STR].AddMod(10,1)
+    
+    if boblin_goblin.health.GetValue() != boblin_goblin.health.max_hp:
+        raise ValueError("Boblin's current hp was not his max hp")
+    if boblin_goblin.health.GetValue() == boblin_clone.health.GetValue():
+        raise ValueError("Boblin has the same health as his clone")
+    if boblin_goblin.ac.GetValue() == boblin_clone.ac.GetValue():
+        raise ValueError("boblin and his clone have the same AC")
+    if boblin_goblin.dmg_mods[aic.BLDG].GetValue() == boblin_clone.dmg_mods[aic.BLDG].GetValue():
+        raise ValueError("boblin and his clone have the same BLDG damage modifiers")
+    if boblin_goblin.speed.GetValue() == boblin_clone.speed.GetValue():
+        raise ValueError("boblin and his clone have the same speed")
+    if boblin_goblin.prof_bonus == boblin_clone.prof_bonus:
+        raise ValueError("boblin and his clone have the same proficiency bonus")
+    if boblin_goblin.attributes[aic.STR].GetScore() == boblin_clone.attributes[aic.STR].GetScore():
+        raise ValueError("boblin's clone is just as ripped as he is")
+    perfect_match = True
+    boblin_effects = boblin_goblin.effects.GetEffects()
+    clone_effects = boblin_clone.effects.GetEffects()
+    for e in range(0, aic.NEFFECT):
+        if boblin_effects[e] != clone_effects[e]:
+            perfect_match = False
+    if perfect_match:
+        raise ValueError("boblin and his clone are under the same effects")
+
+    print("Character class is functional")
