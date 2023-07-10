@@ -6,7 +6,8 @@ import ai_constants as aic
 class Action:
     """Class to define different types of Actions. """
 
-    def __init__(self, name, att, range, aoe=None):
+    def __init__(self, id, name, att, range, aoe=None):
+        self.id = id
         self.name = name
         self.att = att
         #what is the maximum distance a target can be to receive this action?
@@ -41,9 +42,9 @@ class MeleeAtk(Action):
     * `use_prof`: boolean used to determine if `prof_bonus` of a `character` is used for this attack
     * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
     """
-    id = aic.MELEEATK
 
     def __init__(self, name:str, att:int, range:int, damage:float, dice: tuple[int,int], dmg_type:int, use_prof:bool, aoe:int=None):
+        self.id = aic.MELEEATK
         self.name = name
         self.att = att
         self.range = range
@@ -79,9 +80,9 @@ class RangedAtk(Action):
     * `use_prof`: boolean used to determine if `prof_bonus` of a `character` is used for this attack
     * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
     """
-    id = aic.RANGEDATK
 
     def __init__(self, name:str, att:int, range:int, damage:float, dice: tuple[int,int], dmg_type:int, use_prof:bool, aoe:int=None):
+        self.id = aic.RANGEDATK
         self.name = name
         self.att = att
         self.range = range
@@ -120,10 +121,10 @@ class DamageSave(Action):
     * `take_half`: bool dictating if a creature will still take half damage even if they succeed the save
     * `aoe`: integer representing the area of effect (in feet) of this attack. None if it has no aoe
     """
-    id = aic.DAMAGESAVE
     
     def __init__(self, name:str, att:int, range:int, damage:float, dice:tuple[int,int], 
                  dmg_type:int, save_type:int, take_half:bool, aoe:int=None):
+        self.id = aic.DAMAGESAVE
         self.name = name
         self.att = att
         self.range = range
@@ -174,9 +175,9 @@ class ConditionSave(Action):
     determining when to apply effects difficult. In normal circumstances, if a character would fail
     the save on average, then the character will always have the effect applied to them.
     """
-    id = aic.CONDITIONSAVE
     
     def __init__(self, name:str, att:int, range:int, condition:int, duration:int, save_type:int, aoe=None):
+        self.id = ConditionSave
         self.name = name
         self.att = att
         self.range = range
@@ -204,9 +205,9 @@ class ConditionSave(Action):
 
 
 class ConditionBuff(Action):
-    id = aic.CONDITIONBUFF
 
     def __init__(self, name:str, att:int, range:int, condition:int, duration:int, aoe=None):
+        self.id = ConditionBuff
         self.name = name
         self.att = att
         self.range = range
@@ -223,9 +224,9 @@ class ConditionBuff(Action):
         )
     
 class Heal(Action):
-    id = aic.HEAL
 
     def __init__(self, name:str, att:int, range:int, health:int, dice:tuple[int,int], aoe=None):
+        self.id = aic.HEAL
         self.name = name
         self.att = att
         self.range = range
