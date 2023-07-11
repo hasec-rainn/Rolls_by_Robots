@@ -8,8 +8,8 @@ import numpy as np
 class Character:
 
     def __init__(self, name, max_hp, ac, speed, prof_bonus,
-                 dmg_mods : dict[mo.DmgMod], attributes : dict, actions: dict, 
-                 bonus_actions : dict, reactions : dict, leg_actions : dict):
+                 dmg_mods : dict[mo.DmgMod], attributes : dict, actions: dict[act.Action], 
+                 bonus_actions : dict[act.Action], reactions : dict[act.Action], leg_actions : dict[act.Action]):
         """
         Creates a new character object with a specified name, maximum hp, ac,
         and proficiency bonus.    
@@ -33,8 +33,8 @@ class Character:
         self.attributes = {}
         for att in range(0,aic.NATT):
             self.attributes[att] = attributes[att]
+
         self.used_reaction = False
-        
         self.all_actions = {"actions": {"pos": [], "neg": []},
                       "bonus_actions": {"pos": [], "neg": []},
                       "reactions": {"pos": [], "neg": []},
@@ -91,7 +91,7 @@ class Character:
             copy.dmg_mods[type] = self.dmg_mods[type].ReturnCopy()
 
         for att in range(0,aic.NATT):
-            copy.attributes[att] = self.attributes[att]
+            copy.attributes[att] = self.attributes[att].ReturnCopy()
         copy.used_reaction = self.used_reaction
 
         #we don't need to deep copy this
