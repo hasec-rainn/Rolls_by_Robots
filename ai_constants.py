@@ -95,8 +95,10 @@ HEAL = 5
 CONDITIONBUFF = 6
 POLYMORPH = 7
 COMPLEX = 8
-# stands for "Empty Action Set" 
 EAS = {"pos": [], "neg": []}
+"""
+Empty Action Set: Contains no "pos" or "neg" actions
+"""
 
 #damage modifier constants
 NDMGMOD = 4
