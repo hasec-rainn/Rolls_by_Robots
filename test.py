@@ -8,7 +8,7 @@ import sys
 
 desired_tests = sys.argv[1:]
 
-if "health" or "all" in desired_tests:
+if "health" in desired_tests:
     hp = mo.Health(30)
     
     #check to ensure basic functionality
@@ -38,7 +38,7 @@ if "health" or "all" in desired_tests:
 
 
 
-if "attribute" or "all" in desired_tests:
+if "attribute" in desired_tests:
 
     #check to make sure init, GetScore, and GetMod work
     dex = mo.Attribute(aic.DEX,10)
@@ -84,7 +84,7 @@ if "attribute" or "all" in desired_tests:
 
 
 
-if "dmgmod" or "all" in desired_tests:
+if "dmgmod" in desired_tests:
     fire = mo.DmgMod(aic.NORM)
 
     # test that __init__ works
@@ -128,7 +128,7 @@ if "dmgmod" or "all" in desired_tests:
 
 
 
-if "effects" or "all" in desired_tests:
+if "effects" in desired_tests:
 
     # make sure basic init and AddEff works
     eff_obj = mo.Effects()
@@ -157,7 +157,7 @@ if "effects" or "all" in desired_tests:
 
 
 
-if "character" or "all" in desired_tests:
+if "character" in desired_tests:
     dmg_mods = {}
     for dm in range(0,aic.NDMGTYPE):
         dmg_mods[dm] = mo.DmgMod(aic.NORM)
@@ -247,7 +247,7 @@ if "character" or "all" in desired_tests:
 
 
 
-if "rbr" or "all" in desired_tests:
+if "rbr" in desired_tests:
     
     root = rbr.State(None, None, [char_list.boblin_goblin], [char_list.bongo])
 
