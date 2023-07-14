@@ -94,7 +94,8 @@ class Health(ModObj):
         return copy
 
     def __str__(self):
-        return ("\n\tVV Max HP VV" + ModObj.__str__(self))
+        return ("\n\tMax HP: " + str(self.max_hp) 
+                + "\n\tCurrent HP: " + str(self.CurrentHP()))
 
     def SubHP(self, damage):
         """
@@ -270,10 +271,10 @@ class Effects:
         if self.n_effects == 0:
             return "\n\tThere are no effects currently active"
         else:
-            s = "Active Effects:"
+            s = ""
             for e in range(0,aic.NEFFECT):
                 if(self.effects[e]):
-                    s += ("\t" + str(aic.effect_dict[e]))
+                    s += ("\n\t" + str(aic.effect_dict[e]))
             return s
 
     def ReturnCopy(self):
