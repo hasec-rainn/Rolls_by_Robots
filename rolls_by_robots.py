@@ -5,6 +5,7 @@ import ai_constants as aic
 import random as rand
 import math as mth
 import numpy as np
+import character_list as char_list
 
 class State:
     def __init__(self, parent : "State", parent_action : act.Action, 
@@ -21,11 +22,21 @@ class State:
         self.parent_action = parent_action #useful for conditional actions
         self.children = []
 
-    def DeepCopy(self):
-         copy = State(self.parent, self.parent_action, self.teams["party"], self.teams["enemies"])
-         return copy
+    def ReturnCopy(self):
+        """
+        Creates a deep copy of the state and returns it.
+        """
+        party = []
+        for player in self.teams["party"]:
+            party.append(player.ReturnCopy())
 
-    def CreateStates(self, 
+        enemies = []
+        for enemy in self.teams["enemies"]:
+             enemies.append(enemy.ReturnCopy())
+
+        return State(self.parent, self.parent_action, party, enemies)
+
+    def CreateState(self, 
                        s_team : str, sender : int, a_type : str, posneg : str, s_action : int, 
                        r_team : str, receiver : int, 
                        append_state_to_children : bool = False) -> None:
@@ -44,18 +55,34 @@ class State:
         """
 
         #make sure s_team and r_team are valid values
-        if s_team != "party" or s_team != "enemies":
+        if s_team != "party" and s_team != "enemies":
                 raise ValueError("s_team is neither 'party' nor 'enemies'")
-        if r_team != "party" or r_team != "enemies":
+        if r_team != "party" and r_team != "enemies":
                 raise ValueError("r_team is neither 'party' nor 'enemies'")
         
-        #create a deep copy of the current state as
-        new_state = None
-
-        #send the appropriate action to the appropriate character
-        action = self.teams[r_team][sender][a_type][posneg][s_action]
-        print(action)
+        #make sure a_type is valid
+        if a_type != "actions" and a_type != "bonus_actions" \
+        and a_type != "reactions" and a_type != "leg_actions":
+             raise ValueError("a_type is an unexpected value")
         
-        if set_children_to_results:
-            self.children = new_states
-        return new_states
+        #make sure posneg is valid
+        if posneg != "pos" and posneg != "neg":
+             raise ValueError("posneg is an unexpected value")
+
+        #create a deep copy of the current state for our new state
+        new_state = self.ReturnCopy()
+
+        #grab the appropriate action from the appropriate character
+        s_character = new_state.teams[s_team][sender] 
+        a = s_character.all_actions[a_type][posneg][s_action]
+        
+        #apply the action to the specified character (receiver) 
+        new_state.teams[r_team][receiver].RecieveAction(s_character, a, False)
+
+        #add this state to the children list if specified
+        #regardless, return the new state
+        if append_state_to_children:
+            self.children.append(new_state)
+        return new_state
+    
+
