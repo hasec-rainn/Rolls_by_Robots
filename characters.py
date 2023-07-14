@@ -180,7 +180,7 @@ def __ResolveExpectedDamage__(self : Character, sender: Character, a : act.Actio
     elif hit_mod < 0: #looking at disadvantage to hit
         hit_chance = (21 + (sender.prof_bonus*a.use_prof) - self.ac.GetValue())**2 / 400
     else: # looking at advantage to hit
-        hit_chance = 1 - (self.ac.GetValue - (sender.prof_bonus*a.use_prof) - 1)**2 / 400
+        hit_chance = 1 - (self.ac.GetValue() - (sender.prof_bonus*a.use_prof) - 1)**2 / 400
 
     #calc expected damage based off dmg modifier and hit chance
     damage = a.damage * hit_chance
