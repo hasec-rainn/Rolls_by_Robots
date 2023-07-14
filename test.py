@@ -2,10 +2,13 @@ import modifiable_objs as mo
 import ai_constants as aic
 import characters as chr
 import actions as act
+import rolls_by_robots as rbr
+import character_list as char_list
+import sys
 
-desired_tests = ["Character"]
+desired_tests = sys.argv[1:]
 
-if "Health" in desired_tests:
+if "health" or "all" in desired_tests:
     hp = mo.Health(30)
     
     #check to ensure basic functionality
@@ -35,7 +38,7 @@ if "Health" in desired_tests:
 
 
 
-if "Attribute" in desired_tests:
+if "attribute" or "all" in desired_tests:
 
     #check to make sure init, GetScore, and GetMod work
     dex = mo.Attribute(aic.DEX,10)
@@ -81,7 +84,7 @@ if "Attribute" in desired_tests:
 
 
 
-if "DmgMod" in desired_tests:
+if "dmgmod" or "all" in desired_tests:
     fire = mo.DmgMod(aic.NORM)
 
     # test that __init__ works
@@ -125,7 +128,7 @@ if "DmgMod" in desired_tests:
 
 
 
-if "Effects" in desired_tests:
+if "effects" or "all" in desired_tests:
 
     # make sure basic init and AddEff works
     eff_obj = mo.Effects()
@@ -154,7 +157,7 @@ if "Effects" in desired_tests:
 
 
 
-if "Character" in desired_tests:
+if "character" or "all" in desired_tests:
     dmg_mods = {}
     for dm in range(0,aic.NDMGTYPE):
         dmg_mods[dm] = mo.DmgMod(aic.NORM)
@@ -201,6 +204,10 @@ if "Character" in desired_tests:
     if boblin_goblin.health.CurrentHP() != 4:
         raise ValueError("Boblin's lil bow attack didn't do the expected ammount of damage")
 
+    boblin_goblin.effects.AddEff(aic.GENERAL_ADV, 1)
+    boblin_goblin.RecieveAction(boblin_goblin, boblin_goblin.all_actions["actions"]["neg"][0], False)
+    print(boblin_goblin)
+
     #Check that Characters can be deep copied
     boblin_clone = boblin_goblin.ReturnCopy()
     
@@ -236,3 +243,26 @@ if "Character" in desired_tests:
         raise ValueError("boblin and his clone are under the same effects")
 
     print("Character class is functional")
+
+
+
+
+if "rbr" or "all" in desired_tests:
+    
+    root = rbr.State(None, None, [char_list.boblin_goblin], [char_list.bongo])
+
+    #check to see if basic initialization worked
+    if root.teams["party"][0].name != char_list.boblin_goblin.name:
+        raise ValueError("Boblin is not a member of the party")
+    if root.teams["enemies"][0].name != char_list.bongo.name:
+        raise ValueError("Bongo is not a member of the enemies")
+    
+    #next, check to make sure states are copy by value
+    #and not copy by references
+    new_state = root.CreateState("party", 0, "actions", "neg", 0, "enemies", 0)
+    if new_state.teams["enemies"][0].health.GetValue() == root.teams["enemies"][0].health.GetValue():
+        raise ValueError("root Bongo has the same HP as the new_state Bongo")
+    
+
+    
+    print("RbR is functional")
