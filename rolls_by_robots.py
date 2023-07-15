@@ -84,5 +84,58 @@ class State:
         if append_state_to_children:
             self.children.append(new_state)
         return new_state
-    
 
+
+
+class Team:
+    """
+    Class which represents a particular `team`, either "enemies" or "party".
+    Given a `State` object as an input, will try to maximize the score of
+    the `team` is was assigned.
+
+    "Score" is calculated as follows: sum(teams_health) - sum(opposite_teams_health).
+    """
+    def __init__(self, team : str):
+        if team != "party" and team != "enemies":
+             raise ValueError("Error: Team class initialized with invalid team string")
+        
+        self.team = team
+        self.opp_team = None
+        if team == "party":
+            self.opp_team = "enemies"
+        else:
+             self.opp_team = "party"
+        
+    def Maximize(self, s : State, c : int, a_type : list[str]) -> State:
+         """
+         Actual function which performs the maximization.
+         * `s` is the state which `Maximize` will maximize
+         * `c` is the index of the character on team `team` whose turn it is in combat. 
+         This is the character which the `Team` object can control in order to perform
+         its maximization.
+         * `a_type` is a list of action types that the character may peform. Action types
+         include the following: `"actions"`, `"bonus_actions"`, `"reactions"`, `"leg_actions"`.
+         There should only be 1-2 actions in the list at any time.
+         """
+
+         #try performing every action of every type avaialbe to the character
+         #in order to see what action(s) would be the best to take
+         sorted_states = {} #entries are lists sorted on score in descending order
+         for t in a_type:
+              sorted_states[t] = [] #each list is accessed by using an a_type as a key
+              
+              #every combination of (neg_action, opp_team_character)
+              n_neg_action = len(s.teams[self.team][c].all_actions[t]["neg"])
+              n_opp_team_members = len(s.teams[self.opp_team])
+              for s_action in range(0, n_neg_action):
+                   for receiver in n_opp_team_members:
+                        sorted_states[t].append(s.CreateState(self.team, c, a_type, "neg", s_action, self.opp_team, receiver))
+
+              #every combination of (pos_action, same_team_character)
+              n_pos_action = len(s.teams[self.team][c].all_actions[t]["pos"])
+              n_same_team_members = len(s.teams[self.team])
+              for s_action in range(0, n_pos_action):
+                   for receiver in n_same_team_members:
+                        sorted_states[t].append(s.CreateState(self.team, c, a_type, "pos", s_action, self.team, receiver))
+
+        #now lets sort the states based on their score
