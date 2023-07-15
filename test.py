@@ -195,7 +195,6 @@ if "character" in desired_tests:
     if boblin_goblin.health.CurrentHP() != 8:
         raise ValueError("Boblin's tinyfist attack didn't do the expected ammount of damage")
 
-    print(boblin_goblin.all_actions["actions"]["neg"][1])
     boblin_goblin.RecieveAction(boblin_goblin, boblin_goblin.all_actions["actions"]["neg"][1], False)
     if boblin_goblin.health.CurrentHP() != 6:
         raise ValueError("Boblin's lil bow attack didn't do the expected ammount of damage")
@@ -203,10 +202,18 @@ if "character" in desired_tests:
     boblin_goblin.RecieveAction(boblin_goblin, boblin_goblin.all_actions["actions"]["neg"][1], False)
     if boblin_goblin.health.CurrentHP() != 4:
         raise ValueError("Boblin's lil bow attack didn't do the expected ammount of damage")
-
+    
+    #check that advantage/disadvantage are working in the sender/receiver action system
     boblin_goblin.effects.AddEff(aic.GENERAL_ADV, 1)
-    boblin_goblin.RecieveAction(boblin_goblin, boblin_goblin.all_actions["actions"]["neg"][0], False)
-    print(boblin_goblin)
+    boblin_goblin.RecieveAction(boblin_goblin, boblin_goblin.all_actions["actions"]["neg"][1], False)
+    if boblin_goblin.health.CurrentHP() != 1:
+        raise ValueError("Boblin's lil bow attack didn't do the expected ammount of damage")
+
+    boblin_goblin.effects.TimeStep() #removes aic.GENERAL_ADV
+    boblin_goblin.effects.AddEff(aic.GENERAL_DISADV,1)
+    boblin_goblin.RecieveAction(boblin_goblin,boblin_goblin.all_actions["actions"]["neg"][1],False)
+    if boblin_goblin.health.CurrentHP() != 0:
+        raise ValueError("Boblin's lil bow attack didn't do the expected ammount of damage")        
 
     #Check that Characters can be deep copied
     boblin_clone = boblin_goblin.ReturnCopy()
