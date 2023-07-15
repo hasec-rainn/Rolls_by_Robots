@@ -56,7 +56,7 @@ FLY = 21
 
 GENERAL_ADV = 22
 MELEE_ADV = 23
-RANGEDADV = 24
+RANGED_ADV = 24
 GENERAL_DISADV = 25
 MELEE_DISADV = 26
 RANGED_DISADV = 27
@@ -136,7 +136,9 @@ effect_dict = {BLIND:"Blinded", CHARMED:"Charmed", DEAFENED:"Deafened",\
             EX5:"Exhaustion V", EX6:"Exhaustion VI", FRIGHTENED:"Frightened", GRAPPLED:"Grappled",\
             INCAPACITATED:"Incapacitated", INVINCIBLE:"Invincible", INVISIBLE:"Invisible", PARALYZED:"Paralyzed", PETRIFIED:"Petrified",\
             POISONED:"Poisoned", PRONE:"Prone", RESTRAINED:"Restrained", STUNNED:"Stunned",\
-            UNCONSCIOUS:"Unconscious"}
+            UNCONSCIOUS:"Unconscious", GENERAL_ADV:"General Adv", FLY:"Flying", MELEE_ADV:"Melee Adv",\
+            RANGED_ADV:"Ranged Adv",  GENERAL_DISADV:"General Disadv", MELEE_DISADV:"Melee Disadv",\
+            RANGED_DISADV:"Ranged Disadv"}
 
 action_dict = {MELEEATK:"MeleeAtk", RANGEDATK:"RangedAtk",\
                 HEAL:"Heal", CONDITIONBUFF:"ConditionBuff",\
