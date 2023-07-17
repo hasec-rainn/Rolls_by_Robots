@@ -138,6 +138,11 @@ class Team:
          score. Whether maximum or minimum is chosen is based off `self.team`
          """
 
+         #ensure `a_type` is valid
+         for a in a_type:
+            if a not in ["actions", "bonus_actions", "reactions", "leg_actions"]:
+               raise ValueError("invalid a_type used in MiniMax")
+
          #try performing every action of every action type avaialbe to the character
          #in order to see what action(s) would be the best to take
          sorted_states = {} #entries are lists sorted on score in descending order
@@ -158,5 +163,7 @@ class Team:
                    for receiver in n_same_team_members:
                         sorted_states[t].append(s.CreateState(self.team, c, a_type, "pos", s_action, self.team, receiver))
 
-              #now lets sort the states based on their score
+              #now lets sort the states (in place) based on their score
               sorted_states[t].sort()
+          
+          
