@@ -90,13 +90,18 @@ class State:
 
           #create a deep copy of the current state for our new state
           new_state = self.ReturnCopy()
+          new_state.parent = self
 
           #grab the appropriate action from the appropriate character
           s_character = new_state.teams[s_team][sender] 
           a = s_character.all_actions[a_type][posneg][s_action]
+          new_state.parent_action = a
           
           #apply the action to the specified character (receiver) 
           new_state.teams[r_team][receiver].RecieveAction(s_character, a, False)
+
+          #calculate the score of the state
+          new_state.__score__()
 
           #add this state to the children list if specified
           #regardless, return the new state
@@ -123,47 +128,49 @@ class Team:
         else:
              self.opp_team = "party"
         
-    def MiniMax(self, s : State, c : int, a_type : list[str]) -> State:
+    def MiniMax(self, s : State, c : int, a_type : str) -> State:
          """
          Actual function which performs the maximization / minimization.
          * `s` is the state which will be maximized or minimized
          * `c` is the index of the character on team `team` whose turn it is in combat. 
          This is the character which the `Team` object can control in order to perform
          its maximization.
-         * `a_type` is a list of action types that the character may peform. Action types
+         * `a_type` is the type of action that the character may peform. Action types
          include the following: `"actions"`, `"bonus_actions"`, `"reactions"`, `"leg_actions"`.
-         There should only be 1-2 actions in the list at any time.
 
          Returns the state which either has the maximum (party) or minimum (enemies)
          score. Whether maximum or minimum is chosen is based off `self.team`
          """
 
          #ensure `a_type` is valid
-         for a in a_type:
-            if a not in ["actions", "bonus_actions", "reactions", "leg_actions"]:
-               raise ValueError("invalid a_type used in MiniMax")
+         if a_type not in ["actions", "bonus_actions", "reactions", "leg_actions"]:
+              raise ValueError("invalid a_type used in MiniMax")
 
-         #try performing every action of every action type avaialbe to the character
+         #try performing every action of every action type availabe to the character
          #in order to see what action(s) would be the best to take
          sorted_states = {} #entries are lists sorted on score in descending order
-         for t in a_type:
-              sorted_states[t] = [] #each list is accessed by using an a_type as a key
-              
-              #every combination of (neg_action, opp_team_character)
-              n_neg_action = len(s.teams[self.team][c].all_actions[t]["neg"])
-              n_opp_team_members = len(s.teams[self.opp_team])
-              for s_action in range(0, n_neg_action):
-                   for receiver in n_opp_team_members:
-                        sorted_states[t].append(s.CreateState(self.team, c, a_type, "neg", s_action, self.opp_team, receiver))
 
-              #every combination of (pos_action, same_team_character)
-              n_pos_action = len(s.teams[self.team][c].all_actions[t]["pos"])
-              n_same_team_members = len(s.teams[self.team])
-              for s_action in range(0, n_pos_action):
-                   for receiver in n_same_team_members:
-                        sorted_states[t].append(s.CreateState(self.team, c, a_type, "pos", s_action, self.team, receiver))
+         sorted_states = [] #each list is accessed by using an a_type as a key
+          
+         #every combination of (neg_action, opp_team_character)
+         n_neg_action = len(s.teams[self.team][c].all_actions[a_type]["neg"])
+         n_opp_team_members = len(s.teams[self.opp_team])
+         for s_action in range(0, n_neg_action):
+              for receiver in n_opp_team_members:
+                   sorted_states.append(s.CreateState(self.team, c, a_type, "neg", s_action, self.opp_team, receiver))
 
-              #now lets sort the states (in place) based on their score
-              sorted_states[t].sort()
+         #every combination of (pos_action, same_team_character)
+         n_pos_action = len(s.teams[self.team][c].all_actions[a_type]["pos"])
+         n_same_team_members = len(s.teams[self.team])
+         for s_action in range(0, n_pos_action):
+              for receiver in n_same_team_members:
+                   sorted_states.append(s.CreateState(self.team, c, a_type, "pos", s_action, self.team, receiver))
+
+         #now lets sort the states (in place) based on their score
+         sorted_states.sort()
           
-          
+         #now that we have our states sorted, we can return the optimal one
+         if self.team == "party":
+              return sorted_states[ len(sorted_states)-1 ]
+         else:
+              return sorted_states[0]
