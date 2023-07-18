@@ -26,3 +26,24 @@ for a in range(0,aic.NATT):
 bongo = chars.Character("Bongo.",1000,5,60,10,dmg_mods,att,
                         {"pos":[], "neg":[act.RangedAtk("True Power Word Kill",aic.CHA,300,2000,[1000,4],aic.NECR,True),act.MeleeAtk("tiny fists", aic.STR,5,2,[1,4],aic.BLDG,True)]},
                         aic.EAS, aic.EAS, aic.EAS)
+
+att[aic.STR] = mo.Attribute(aic.STR,20)
+att[aic.DEX] = mo.Attribute(aic.DEX,16)
+att[aic.CON] = mo.Attribute(aic.CON,18)
+att[aic.WIS] = mo.Attribute(aic.WIS,12)
+att[aic.INT] = mo.Attribute(aic.INT,6)
+att[aic.CHA] = mo.Attribute(aic.CHA,10)
+
+grog = chars.Character("Grog", 50, 16, 30, 6, dmg_mods,att, 
+                       {"pos": [], "neg": [act.MeleeAtk("Axe Swing",aic.STR,5,24,(4,12),aic.SLSH, True), act.MeleeAtk("Fists",aic.STR,5,8,(4,4),aic.BLDG, True) ]},
+                         aic.EAS,aic.EAS, aic.EAS)
+
+att[aic.STR] = mo.Attribute(aic.STR,8)
+att[aic.DEX] = mo.Attribute(aic.DEX,14)
+att[aic.CON] = mo.Attribute(aic.CON,12)
+att[aic.WIS] = mo.Attribute(aic.WIS,10)
+att[aic.INT] = mo.Attribute(aic.INT,10)
+att[aic.CHA] = mo.Attribute(aic.CHA,20)
+scanlan = chars.Character("Scanlan", 30, 15, 25, 6, dmg_mods, att, 
+                          {"pos": [], "neg": [act.MeleeAtk("tiny fists", aic.STR,5,2,[1,4],aic.BLDG,True)]},
+                            {"pos": [act.Heal("Healing Word", aic.CHA, 30, 4, (1,4))], "neg": []})
